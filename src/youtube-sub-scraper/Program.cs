@@ -24,16 +24,7 @@ await SaveBombaSubtitlesToDb(bombaSubtitles);
 
 await RemoveUnneededCharactersFromBombaSubtitles();
 
-string ClosedCaptionTrackToTxt(ClosedCaptionTrack track)
-{
-    var sb = new List<string>();
-    foreach (var caption in track.Captions)
-    {
-        sb.Add(caption.Text.TrimStart(new char[] { ' ', '-' }));
-    }
-
-    return string.Join(" ", sb).Replace(Environment.NewLine, string.Empty);
-}
+return;
 
 async Task<List<BombaSubtitles>> GetSubtitlesForUrl(string videoUrl)
 {
@@ -56,13 +47,8 @@ async Task<List<BombaSubtitles>> GetSubtitlesForUrl(string videoUrl)
 
         if (trackInfo != null)
         {
-            if (video.Title.Contains("LASER"))
-                Console.WriteLine("");
             // Download the closed caption track
             var track = await youtube.Videos.ClosedCaptions.GetAsync(trackInfo);
-
-            // Convert to SRT format
-            var txt = ClosedCaptionTrackToTxt(track);
 
             return track
                 .Captions
@@ -74,7 +60,7 @@ async Task<List<BombaSubtitles>> GetSubtitlesForUrl(string videoUrl)
     {
         Console.WriteLine($"An error occurred: {ex.Message}");
     }
-    return null;
+    return [];
 }
 
 async Task<List<string>> GetVideoUrlsFromPlaylist(string playlistUrl)
