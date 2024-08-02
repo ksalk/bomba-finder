@@ -23,7 +23,7 @@ class BombaSubtitles:
 
 def get_all_subtitles_from_db() -> list[BombaSubtitles]:
     # Connect to the SQLite database
-    conn = sqlite3.connect('bomba3.db')
+    conn = sqlite3.connect('bomba.db')
     cursor = conn.cursor()
     
     # Query to select all rows from the BombaSubtitles table
