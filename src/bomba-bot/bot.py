@@ -138,7 +138,7 @@ async def bomba(interaction: discord.Interaction, text: str):
     )
 
     # set thumbnail
-    video_id = re.search(r'(?:v=|\/)([0-9A-Za-z_-]{11}).*', result['VideoUrl'])
+    video_id = re.search(r'(?:v=|\/)([0-9A-Za-z_-]{11}).*', result['VideoUrl']).group(1)
     thumbnail_url = f'https://img.youtube.com/vi/{video_id}/maxresdefault.jpg'
     embed.set_thumbnail(url=thumbnail_url)
 
