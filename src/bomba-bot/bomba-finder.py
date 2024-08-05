@@ -1,5 +1,5 @@
 # bot.py
-import os
+import re
 import sqlite3
 from rapidfuzz import process
 from collections import defaultdict
