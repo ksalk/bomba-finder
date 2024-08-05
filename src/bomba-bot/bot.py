@@ -55,7 +55,10 @@ def parse_offset(offset_str):
 
     if '.' not in parts[2]:
         parts[2] = parts[2] + '.000'
-    seconds, milliseconds = map(int, parts[2].split('.'))
+	
+    splitted_last_part = parts[2].split('.')
+    splitted_last_part[1] = splitted_last_part[1][:3]
+    seconds, milliseconds = map(int, splitted_last_part)
     return timedelta(hours=hours, minutes=minutes, seconds=seconds, milliseconds=milliseconds)
 
 def get_subtitles_sliding_windows(subtitles, quote) -> list[BombaSubtitles]:
@@ -129,9 +132,15 @@ async def bomba(interaction: discord.Interaction, text: str):
     print(f"Best result is {result['Title']} with confidence {result['Confidence']}")
 
     embed = discord.Embed(
-        title=text,
+        title=f'Szukam "{text}"',
+        description=f'Wynik znaleziono z dopasowaniem {result["Confidence"]:.1f}%',
         color=discord.Color.blue()
     )
+
+    # set thumbnail
+    video_id = re.search(r'(?:v=|\/)([0-9A-Za-z_-]{11}).*', result['VideoUrl'])
+    thumbnail_url = f'https://img.youtube.com/vi/{video_id}/maxresdefault.jpg'
+    embed.set_thumbnail(url=thumbnail_url)
 
     timestamp_seconds = parse_offset(result['Timestamp']).seconds
     embed.add_field(
