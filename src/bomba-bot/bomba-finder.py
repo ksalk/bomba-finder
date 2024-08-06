@@ -39,7 +39,7 @@ def get_all_subtitles_from_db() -> list[BombaSubtitles]:
     # Iterate over each row and create BombaSubtitles objects
     for row in rows:
         id, title, videoUrl, subtitles, offset = row
-        subtitle = BombaSubtitles(id, title, videoUrl, subtitles, offset)
+        subtitle = BombaSubtitles(id, title, videoUrl, subtitles.lower(), offset)
         subtitles_list.append(subtitle)
     
     # Close the connection
@@ -136,7 +136,7 @@ tree = app_commands.CommandTree(client)
 @tree.command(name='bomba', description='Podaj cytat')
 async def bomba(interaction: discord.Interaction, text: str):
     print(f'Received bomba command with text: {text}')
-    result = search_quote_in_db(text)
+    result = search_quote_in_db(text.lower())
     print(f"Best result is {result['Title']} with confidence {result['Confidence']}")
 
     embed = discord.Embed(
