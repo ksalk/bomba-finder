@@ -121,7 +121,7 @@ def search_quote_in_db(quote):
 # START
 
 load_dotenv()
-discord_token = os.getenv('DISCORD_TOKEN')
+discord_token = os.getenv('DISCORD_TOKEN').encode('utf-8').decode('unicode_escape')
 
 if not discord_token:
     raise ValueError("No DISCORD_TOKEN found in environment variables")
@@ -163,4 +163,4 @@ async def on_ready():
     await tree.sync()
     print('Logged in successfully')
 
-client.run(os.getenv('DISCORD_TOKEN'))
+client.run(discord_token)
