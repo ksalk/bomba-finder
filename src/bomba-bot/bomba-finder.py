@@ -1,14 +1,14 @@
 # bot.py
 import re
 import sqlite3
+import os
+from dotenv import load_dotenv
 from rapidfuzz import process
 from collections import defaultdict
 from datetime import timedelta
 
 import discord
 from discord import app_commands
-
-TOKEN = 'DISCORD_APP_TOKEN'
 
 class BombaSubtitles:
   def __init__(self, id, title, videoUrl, subtitles, offset):
@@ -118,6 +118,14 @@ def search_quote_in_db(quote):
 
     return { 'Title': title, 'VideoUrl': video_url, 'Timestamp': best_row.offset, 'Confidence': confidence }
 
+# START
+
+load_dotenv()
+discord_token = os.getenv('DISCORD_TOKEN')
+
+if not discord_token:
+    raise ValueError("No DISCORD_TOKEN found in environment variables")
+
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -155,4 +163,4 @@ async def on_ready():
     await tree.sync()
     print('Logged in successfully')
 
-client.run(TOKEN)
+client.run(os.getenv('DISCORD_TOKEN'))
