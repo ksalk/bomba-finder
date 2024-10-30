@@ -1,14 +1,14 @@
-﻿namespace YoutubeSubScraper.Persistence;
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace YoutubeSubScraper.Persistence;
 
 public class Persistence
 {
-    public static async Task SaveBombaSubtitlesToDb(List<BombaSubtitles> bombaSubtitles)
+    public static async Task SaveBombaSubtitlesToDb(List<BombaSubtitles> bombaSubtitles, string dbName)
     {
-        await using var db = new BombaDbContext();
+        var options = new DbContextOptionsBuilder().UseSqlite($"Data Source={dbName}");
+        await using var db = new BombaDbContext(options);
         await db.Database.EnsureCreatedAsync();
-
-        foreach (var subtitle in bombaSubtitles)
-            subtitle.RemoveUnneededCharactersFromSubtitles();
 
         await db.BombaSubtitles.AddRangeAsync(bombaSubtitles);
         await db.SaveChangesAsync();

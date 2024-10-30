@@ -15,7 +15,7 @@ foreach (var playlistUrl in playlistUrls)
 
 videoUrls = videoUrls.Distinct().ToList();
 
-List<BombaSubtitles> bombaSubtitles = new List<BombaSubtitles>();
+var bombaSubtitles = new List<BombaSubtitles>();
 foreach (var videoUrl in videoUrls)
 {
     // Try to download YT captions first
@@ -27,7 +27,8 @@ foreach (var videoUrl in videoUrls)
     }
 
     // If no YT captions are available, attempt to use Azure Speech-to-Text
-    subtitles = await AzureSpeechStudioSubtitlesProvider.Provide(videoUrl);
+    var audioWavFilePath = await Youtube.SaveAudioToWavFile(videoUrl);
+    subtitles = await AzureSpeechToText.ProcessSpeechFromWavFile(audioWavFilePath);
     if (subtitles.Any())
     {
         bombaSubtitles.AddRange(subtitles);
@@ -35,4 +36,6 @@ foreach (var videoUrl in videoUrls)
     }
 }
 
-//await Persistence.SaveBombaSubtitlesToDb(bombaSubtitles);
+Console.WriteLine($"Bomba Subtitles Found: {bombaSubtitles.Count}");
+var runId = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+await Persistence.SaveBombaSubtitlesToDb(bombaSubtitles, $"bomba-{runId}.db");

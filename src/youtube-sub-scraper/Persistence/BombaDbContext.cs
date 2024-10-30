@@ -6,11 +6,8 @@ namespace YoutubeSubScraper.Persistence
     {
         public DbSet<BombaSubtitles> BombaSubtitles { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlite($"Data Source=bomba_{Guid.NewGuid()}.db");
-        }
-
+        public BombaDbContext(DbContextOptionsBuilder optionsBuilder) : base(optionsBuilder.Options) { }
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder

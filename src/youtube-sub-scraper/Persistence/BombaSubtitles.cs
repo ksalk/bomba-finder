@@ -1,6 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace YoutubeSubScraper.Persistence;
 
@@ -19,9 +17,11 @@ public class BombaSubtitles
         VideoUrl = videoUrl;
         Subtitles = subtitles;
         Offset = offset;
+
+        RemoveUnneededCharactersFromSubtitles();
     }
 
-    public void RemoveUnneededCharactersFromSubtitles()
+    private void RemoveUnneededCharactersFromSubtitles()
     {
         Subtitles = Subtitles.Replace("\r", " ");
         Subtitles = Subtitles.Replace("\n", " ");

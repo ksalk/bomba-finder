@@ -1,11 +1,11 @@
-﻿using YoutubeExplode.Videos;
-using YoutubeExplode;
-using Microsoft.CognitiveServices.Speech;
+﻿using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using NAudio.Wave;
+using YoutubeExplode;
+using YoutubeExplode.Videos;
 using YoutubeSubScraper.Persistence;
 
-namespace YoutubeSubScraper
+namespace YoutubeSubScraper.SubtitlesProviders
 {
     public static class AzureSpeechStudioSubtitlesProvider
     {
@@ -39,6 +39,7 @@ namespace YoutubeSubScraper
             var audioFilePathWav = Path.ChangeExtension(audioFilePathMp3, "wav");
             ConvertMp3ToWav(audioFilePathMp3 , audioFilePathWav);
 
+            // Get this from config file
             string subscriptionKey = "X";
             string region = "eastus";
 
