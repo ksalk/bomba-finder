@@ -1,5 +1,18 @@
-﻿using YoutubeSubScraper;
+﻿using Microsoft.Extensions.Configuration;
+using YoutubeSubScraper;
 using YoutubeSubScraper.Persistence;
+
+const bool USE_AZURE_SPEECH_TO_TEXT = true;
+
+var environment = Environment.GetEnvironmentVariable("NETCORE_ENVIRONMENT");
+var builder = new ConfigurationBuilder()
+    .AddJsonFile("appSettings.json")
+    .AddJsonFile($"appSettings.{environment}.json", optional: true);
+
+var azureConfigSection = builder
+    .Build()
+    .GetSection("Azure");
+AzureSpeechToText.SetSubcriptionKey(azureConfigSection["SubscriptionKey"] ?? string.Empty);
 
 var playlistUrls = new List<string>()
 {
@@ -26,13 +39,16 @@ foreach (var videoUrl in videoUrls)
         continue;
     }
 
-    // If no YT captions are available, attempt to use Azure Speech-to-Text
-    var audioWavFilePath = await Youtube.SaveAudioToWavFile(videoUrl);
-    subtitles = await AzureSpeechToText.ProcessSpeechFromWavFile(audioWavFilePath);
-    if (subtitles.Any())
+    if (USE_AZURE_SPEECH_TO_TEXT)
     {
-        bombaSubtitles.AddRange(subtitles);
-        continue;
+        // If no YT captions are available, attempt to use Azure Speech-to-Text
+        var audioWavFilePath = await Youtube.SaveAudioToWavFile(videoUrl);
+        subtitles = await AzureSpeechToText.ProcessSpeechFromWavFile(audioWavFilePath);
+        if (subtitles.Any())
+        {
+            bombaSubtitles.AddRange(subtitles);
+            continue;
+        }
     }
 }
 
