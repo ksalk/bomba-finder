@@ -12,7 +12,7 @@ var builder = new ConfigurationBuilder()
 var azureConfigSection = builder
     .Build()
     .GetSection("Azure");
-AzureSpeechToText.SetSubcriptionKey(azureConfigSection["SubscriptionKey"] ?? string.Empty);
+AzureSpeechToText.SetSubscriptionKey(azureConfigSection["SubscriptionKey"] ?? string.Empty);
 
 var playlistUrls = new List<string>()
 {

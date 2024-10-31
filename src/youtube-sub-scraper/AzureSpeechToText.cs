@@ -9,7 +9,7 @@ public static class AzureSpeechToText
     private static string _azureSubscriptionKey { get; set; }
     private static string _azureRegion => "eastus";
 
-    public static void SetSubcriptionKey(string subscriptionKey)
+    public static void SetSubscriptionKey(string subscriptionKey)
     {
         if(string.IsNullOrWhiteSpace(subscriptionKey))
             throw new ArgumentNullException(nameof(subscriptionKey), "Azure Subscription Key cannot be null or empty.");
