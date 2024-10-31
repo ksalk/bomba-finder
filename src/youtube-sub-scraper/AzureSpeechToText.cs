@@ -22,58 +22,55 @@ public static class AzureSpeechToText
         config.SpeechRecognitionLanguage = "pl-PL";
         config.SetProfanity(ProfanityOption.Raw);
         config.OutputFormat = OutputFormat.Detailed;
-        await RecognizeSpeechFromAudioFileAsync(config, filePath);
-        return new List<BombaSubtitles>();
+        return await RecognizeSpeechFromAudioWavFileAsync(config, filePath);
     }
     
-    static async Task RecognizeSpeechFromAudioFileAsync(SpeechConfig config, string audioFilePath)
+    private static async Task<List<BombaSubtitles>> RecognizeSpeechFromAudioWavFileAsync(SpeechConfig config, string audioWavFilePath)
+    {
+        using var audioInput = AudioConfig.FromWavFileInput(audioWavFilePath);
+
+        using var recognizer = new SpeechRecognizer(config, audioInput);
+
+        Console.WriteLine("Recognizing...");
+        recognizer.Recognized += (s, e) =>
         {
-            // Configure the audio input for the recognizer to use the MP3 file
-            using var audioInput = AudioConfig.FromWavFileInput(audioFilePath); // WAV file
-                                                                                // If using MP3, you need to create the right audio stream.
-
-            using var recognizer = new SpeechRecognizer(config, audioInput);
-
-            Console.WriteLine("Recognizing...");
-            // Subscribing to events
-            recognizer.Recognized += (s, e) =>
+            if (e.Result.Reason == ResultReason.RecognizedSpeech)
             {
-                if (e.Result.Reason == ResultReason.RecognizedSpeech)
-                {
-                    Console.WriteLine($"Recognized: {e.Result.Text}");
-                    Console.WriteLine("JSON Response:");
-                    Console.WriteLine(e.Result.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult));
-                }
-                else if (e.Result.Reason == ResultReason.NoMatch)
-                {
-                    Console.WriteLine("No speech could be recognized.");
-                }
-            };
-
-            recognizer.Canceled += (s, e) =>
+                Console.WriteLine($"Recognized: {e.Result.Text}");
+                Console.WriteLine("JSON Response:");
+                Console.WriteLine(e.Result.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult));
+            }
+            else if (e.Result.Reason == ResultReason.NoMatch)
             {
-                Console.WriteLine($"CANCELED: Reason={e.Reason}");
+                Console.WriteLine("No speech could be recognized.");
+            }
+        };
 
-                if (e.Reason == CancellationReason.Error)
-                {
-                    Console.WriteLine($"CANCELED: ErrorDetails={e.ErrorDetails}");
-                }
-            };
+        recognizer.Canceled += (s, e) =>
+        {
+            Console.WriteLine($"CANCELED: Reason={e.Reason}");
 
-            recognizer.SessionStopped += (s, e) =>
+            if (e.Reason == CancellationReason.Error)
             {
-                Console.WriteLine("Session stopped. Stopping recognition.");
-            };
+                Console.WriteLine($"CANCELED: ErrorDetails={e.ErrorDetails}");
+            }
+        };
 
-            // Start continuous recognition
-            Console.WriteLine("Processing the WAV file...");
-            await recognizer.StartContinuousRecognitionAsync().ConfigureAwait(false);
+        recognizer.SessionStopped += (s, e) =>
+        {
+            Console.WriteLine("Session stopped. Stopping recognition.");
+        };
 
-            // Wait until the session stops or the entire file is processed
-            Console.WriteLine("Recognition started. Press any key to stop...");
-            Console.ReadKey();
+        // Start continuous recognition
+        Console.WriteLine("Processing the WAV file...");
+        await recognizer.StartContinuousRecognitionAsync().ConfigureAwait(false);
 
-            // Stop recognition
-            await recognizer.StopContinuousRecognitionAsync().ConfigureAwait(false);
-        }
+        // Wait until the session stops or the entire file is processed
+        Console.WriteLine("Recognition started. Press any key to stop...");
+        Console.ReadKey();
+
+        // Stop recognition
+        await recognizer.StopContinuousRecognitionAsync().ConfigureAwait(false);
+        return new List<BombaSubtitles>();
+    }
 }
