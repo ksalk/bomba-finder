@@ -9,6 +9,15 @@ namespace YoutubeSubScraper;
 
 public static class Youtube
 {
+    public static async Task<string> GetVideoTitle(string videoUrl)
+    {
+        var youtubeClient = new YoutubeClient();
+        var videoId = VideoId.Parse(videoUrl);
+        var video = await youtubeClient.Videos.GetAsync(videoId);
+        
+        return video.Title;
+    }
+    
     public static async Task<List<string>> GetVideoUrlsFromPlaylistUrl(string playlistUrl)
     {
         var youtube = new YoutubeClient();
@@ -88,19 +97,6 @@ public static class Youtube
         ConvertMp3ToWav(audioFilePathMp3 , audioFilePathWav);
 
         return audioFilePathWav;
-
-        // // Get this from config file
-        // string subscriptionKey = "X";
-        // string region = "eastus";
-        //
-        // var config = SpeechConfig.FromSubscription(subscriptionKey, region);
-        // config.SpeechRecognitionLanguage = "pl-PL";
-        // config.SetProfanity(ProfanityOption.Raw);
-        // config.OutputFormat = OutputFormat.Detailed;
-        // await RecognizeSpeechFromAudioFileAsync(config, audioFilePathWav);
-        // // add response to cache or db to not get it again and use azure resources         
-        //
-        // return [];
     }
     
     public static void ConvertMp3ToWav(string mp3File, string wavFile)

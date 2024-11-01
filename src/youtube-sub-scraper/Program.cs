@@ -16,11 +16,11 @@ AzureSpeechToText.SetSubscriptionKey(azureConfigSection["SubscriptionKey"] ?? st
 
 var playlistUrls = new List<string>()
 {
-    "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR"
+    //"https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR"
 }; 
 var videoUrls = new List<string>()
 {
-    "https://www.youtube.com/watch?v=6WMl6CSlLos"
+    "https://www.youtube.com/watch?v=lQBmZBJCYcY"
 };
 
 foreach (var playlistUrl in playlistUrls)
@@ -31,6 +31,7 @@ videoUrls = videoUrls.Distinct().ToList();
 var bombaSubtitles = new List<BombaSubtitles>();
 foreach (var videoUrl in videoUrls)
 {
+    var videoTitle = await Youtube.GetVideoTitle(videoUrl);
     // Try to download YT captions first
     var subtitles = await Youtube.GetCaptionsForVideo(videoUrl);
     if (subtitles.Any())
@@ -46,6 +47,11 @@ foreach (var videoUrl in videoUrls)
         subtitles = await AzureSpeechToText.ProcessSpeechFromWavFile(audioWavFilePath);
         if (subtitles.Any())
         {
+            subtitles.ForEach(s =>
+            {
+                s.VideoUrl = videoUrl;
+                s.Title = videoTitle;
+            });
             bombaSubtitles.AddRange(subtitles);
             continue;
         }

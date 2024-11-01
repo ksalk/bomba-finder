@@ -5,8 +5,8 @@ namespace YoutubeSubScraper.Persistence;
 public class BombaSubtitles
 {
     public Guid Id { get; private set; }
-    public string Title { get; private set; }
-    public string VideoUrl { get; private set; }
+    public string Title { get; set; }
+    public string VideoUrl { get; set; }
     public string Subtitles { get; private set; }
     public TimeSpan Offset { get; private set; }
 

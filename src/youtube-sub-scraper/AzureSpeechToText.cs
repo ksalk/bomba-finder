@@ -1,4 +1,5 @@
-﻿using Microsoft.CognitiveServices.Speech;
+﻿using System.Text;
+using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using YoutubeSubScraper.Persistence;
 
@@ -30,15 +31,16 @@ public static class AzureSpeechToText
         using var audioInput = AudioConfig.FromWavFileInput(audioWavFilePath);
 
         using var recognizer = new SpeechRecognizer(config, audioInput);
-
-        Console.WriteLine("Recognizing...");
+        var stopRecognition = new TaskCompletionSource<int>();
+        var subtitles = new List<BombaSubtitles>();
+        
         recognizer.Recognized += (s, e) =>
         {
             if (e.Result.Reason == ResultReason.RecognizedSpeech)
             {
+                subtitles.Add(new BombaSubtitles("test", "test", e.Result.Text, TimeSpan.FromMicroseconds(e.Offset / 100)));
                 Console.WriteLine($"Recognized: {e.Result.Text}");
-                Console.WriteLine("JSON Response:");
-                Console.WriteLine(e.Result.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult));
+                Console.WriteLine($"Result: {e.Result.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult)}");
             }
             else if (e.Result.Reason == ResultReason.NoMatch)
             {
@@ -52,25 +54,26 @@ public static class AzureSpeechToText
 
             if (e.Reason == CancellationReason.Error)
             {
+                Console.WriteLine($"CANCELED: ErrorCode={e.ErrorCode}");
                 Console.WriteLine($"CANCELED: ErrorDetails={e.ErrorDetails}");
+                Console.WriteLine("CANCELED: Did you update the subscription info?");
             }
+
+            stopRecognition.TrySetResult(0);
         };
 
         recognizer.SessionStopped += (s, e) =>
         {
-            Console.WriteLine("Session stopped. Stopping recognition.");
+            Console.WriteLine("Session stopped.");
+            stopRecognition.TrySetResult(0);
         };
 
-        // Start continuous recognition
-        Console.WriteLine("Processing the WAV file...");
-        await recognizer.StartContinuousRecognitionAsync().ConfigureAwait(false);
+        await recognizer.StartContinuousRecognitionAsync();
 
-        // Wait until the session stops or the entire file is processed
-        Console.WriteLine("Recognition started. Press any key to stop...");
-        Console.ReadKey();
+        // Waits for completion.
+        Task.WaitAny(new[] { stopRecognition.Task });
 
-        // Stop recognition
-        await recognizer.StopContinuousRecognitionAsync().ConfigureAwait(false);
-        return new List<BombaSubtitles>();
+        await recognizer.StopContinuousRecognitionAsync();
+        return subtitles;
     }
 }
