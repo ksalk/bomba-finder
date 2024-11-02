@@ -24,3 +24,8 @@ Then you can run and stop the bot using bash script:
 ./bomba start
 ./bomba stop
 ```
+
+# todo
+
+* add Azure Speech-to-text AI
+* add script to streamline db generation
