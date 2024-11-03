@@ -3,6 +3,7 @@ using YoutubeExplode;
 using YoutubeExplode.Playlists;
 using YoutubeExplode.Common;
 using YoutubeExplode.Videos;
+using YoutubeExplode.Videos.Streams;
 using YoutubeSubScraper.Persistence;
 
 namespace YoutubeSubScraper;
@@ -74,7 +75,7 @@ public static class Youtube
         var youtube = new YoutubeClient();
         var videoId = VideoId.Parse(videoUrl);
         var video = await youtube.Videos.GetAsync(videoId);
-
+        
         var streamManifest = await youtube.Videos.Streams.GetManifestAsync(videoId);
         var audioStreamInfo = streamManifest
             .GetAudioOnlyStreams()

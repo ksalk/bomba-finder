@@ -20,12 +20,13 @@ var playlistUrls = new List<string>()
 }; 
 var videoUrls = new List<string>()
 {
-    "https://www.youtube.com/watch?v=lQBmZBJCYcY"
+    "https://www.youtube.com/watch?v=Oykvszo9csA"
 };
 
 foreach (var playlistUrl in playlistUrls)
     videoUrls.AddRange(await Youtube.GetVideoUrlsFromPlaylistUrl(playlistUrl));
 
+// TODO: make this a collection of videoIds, not urls
 videoUrls = videoUrls.Distinct().ToList();
 
 var bombaSubtitles = new List<BombaSubtitles>();
@@ -43,7 +44,7 @@ foreach (var videoUrl in videoUrls)
     if (USE_AZURE_SPEECH_TO_TEXT)
     {
         // If no YT captions are available, attempt to use Azure Speech-to-Text
-        var audioWavFilePath = await Youtube.SaveAudioToWavFile(videoUrl);
+        var audioWavFilePath = await YoutubeDownloader.SaveAudioToWavFile(videoUrl);
         subtitles = await AzureSpeechToText.ProcessSpeechFromWavFile(audioWavFilePath);
         if (subtitles.Any())
         {
