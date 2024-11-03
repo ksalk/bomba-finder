@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Microsoft.CognitiveServices.Speech;
+﻿using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using YoutubeSubScraper.Persistence;
 
@@ -19,13 +18,22 @@ public static class AzureSpeechToText
     
     public static async Task<List<BombaSubtitles>> ProcessSpeechFromWavFile(string filePath)
     {
+        var config = GetSpeechRecognitionConfig();
+        return await RecognizeSpeechFromAudioWavFileAsync(config, filePath);
+    }
+
+    private static SpeechConfig GetSpeechRecognitionConfig()
+    {
+        if(string.IsNullOrWhiteSpace(_azureSubscriptionKey))
+            throw new ArgumentNullException(nameof(_azureSubscriptionKey), "Azure Subscription Key cannot be null or empty.");
+        
         var config = SpeechConfig.FromSubscription(_azureSubscriptionKey, _azureRegion);
         config.SpeechRecognitionLanguage = "pl-PL";
         config.SetProfanity(ProfanityOption.Raw);
         config.OutputFormat = OutputFormat.Detailed;
-        return await RecognizeSpeechFromAudioWavFileAsync(config, filePath);
+        return config;
     }
-    
+
     private static async Task<List<BombaSubtitles>> RecognizeSpeechFromAudioWavFileAsync(SpeechConfig config, string audioWavFilePath)
     {
         using var audioInput = AudioConfig.FromWavFileInput(audioWavFilePath);
