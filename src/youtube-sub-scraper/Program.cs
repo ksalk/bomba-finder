@@ -3,7 +3,7 @@ using YoutubeExplode.Videos;
 using YoutubeSubScraper;
 using YoutubeSubScraper.Persistence;
 
-const bool USE_AZURE_SPEECH_TO_TEXT = false;
+const bool USE_AZURE_SPEECH_TO_TEXT = true;
 
 var environment = Environment.GetEnvironmentVariable("NETCORE_ENVIRONMENT");
 var builder = new ConfigurationBuilder()
@@ -17,12 +17,12 @@ AzureSpeechToText.SetSubscriptionKey(azureConfigSection["SubscriptionKey"] ?? st
 
 var playlistUrls = new List<string>()
 {
-    "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR"
+    //"https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR"
 }; 
 var videoUrls = new List<string>()
 {
     //"https://www.youtube.com/watch?v=Oykvszo9csA",
-    //"https://www.youtube.com/watch?v=2JWOdqS7fI4"
+    "https://www.youtube.com/watch?v=2JWOdqS7fI4"
 };
 
 foreach (var playlistUrl in playlistUrls)
