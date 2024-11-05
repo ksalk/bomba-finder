@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using YoutubeExplode.Videos;
 
 namespace YoutubeSubScraper.Persistence;
 
@@ -7,14 +8,16 @@ public class BombaSubtitles
     public Guid Id { get; private set; }
     public string Title { get; set; }
     public string VideoUrl { get; set; }
+    public string VideoId { get; set; }
     public string Subtitles { get; private set; }
     public TimeSpan Offset { get; private set; }
 
-    public BombaSubtitles(string title, string videoUrl, string subtitles, TimeSpan offset)
+    public BombaSubtitles(string title, string videoUrl, string videoId, string subtitles, TimeSpan offset)
     {
         Id = Guid.NewGuid();
         Title = title;
         VideoUrl = videoUrl;
+        VideoId = videoId;
         Subtitles = subtitles;
         Offset = offset;
 

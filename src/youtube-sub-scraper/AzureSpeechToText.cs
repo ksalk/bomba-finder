@@ -1,5 +1,6 @@
 ﻿using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
+using YoutubeExplode.Videos;
 using YoutubeSubScraper.Persistence;
 
 namespace YoutubeSubScraper;
@@ -46,19 +47,19 @@ public static class AzureSpeechToText
         {
             if (e.Result.Reason == ResultReason.RecognizedSpeech)
             {
-                subtitles.Add(new BombaSubtitles("test", "test", e.Result.Text, TimeSpan.FromMicroseconds(e.Offset / 100)));
-                Console.WriteLine($"Recognized: {e.Result.Text}");
-                Console.WriteLine($"Result: {e.Result.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult)}");
+                subtitles.Add(new BombaSubtitles(string.Empty, string.Empty, new VideoId(), e.Result.Text, TimeSpan.FromMicroseconds(e.Offset * 100)));
+                //Console.WriteLine($"Recognized: {e.Result.Text}");
+                //Console.WriteLine($"Result: {e.Result.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult)}");
             }
             else if (e.Result.Reason == ResultReason.NoMatch)
             {
-                Console.WriteLine("No speech could be recognized.");
+                //Console.WriteLine("No speech could be recognized.");
             }
         };
 
         recognizer.Canceled += (s, e) =>
         {
-            Console.WriteLine($"CANCELED: Reason={e.Reason}");
+            //Console.WriteLine($"CANCELED: Reason={e.Reason}");
 
             if (e.Reason == CancellationReason.Error)
             {
@@ -72,13 +73,12 @@ public static class AzureSpeechToText
 
         recognizer.SessionStopped += (s, e) =>
         {
-            Console.WriteLine("Session stopped.");
+            //Console.WriteLine("Session stopped.");
             stopRecognition.TrySetResult(0);
         };
 
         await recognizer.StartContinuousRecognitionAsync();
 
-        // Waits for completion.
         Task.WaitAny(new[] { stopRecognition.Task });
 
         await recognizer.StopContinuousRecognitionAsync();
