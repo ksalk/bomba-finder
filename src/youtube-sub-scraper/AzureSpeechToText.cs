@@ -45,11 +45,9 @@ public static class AzureSpeechToText
         
         recognizer.Recognized += (s, e) =>
         {
-            if (e.Result.Reason == ResultReason.RecognizedSpeech)
+            if (e.Result.Reason == ResultReason.RecognizedSpeech && !string.IsNullOrWhiteSpace(e.Result.Text))
             {
-                subtitles.Add(new BombaSubtitles(string.Empty, string.Empty, new VideoId(), e.Result.Text, TimeSpan.FromMicroseconds(e.Offset * 100)));
-                //Console.WriteLine($"Recognized: {e.Result.Text}");
-                //Console.WriteLine($"Result: {e.Result.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult)}");
+                subtitles.Add(new BombaSubtitles(string.Empty, string.Empty, new VideoId(), e.Result.Text, TimeSpan.FromTicks((long)e.Offset)));
             }
             else if (e.Result.Reason == ResultReason.NoMatch)
             {
