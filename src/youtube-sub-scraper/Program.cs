@@ -1,7 +1,18 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Serilog;
+using Serilog.Events;
 using YoutubeExplode.Videos;
 using YoutubeSubScraper;
 using YoutubeSubScraper.Persistence;
+
+var runId = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.File(Path.Combine(Directory.GetCurrentDirectory(), "Logs", $"log-{runId}.txt"),
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Information)
+
+    .CreateLogger();
 
 bool USE_AZURE_SPEECH_TO_TEXT = true;
 const string dbFileName = "bomba-subtitles.db"; 
@@ -39,56 +50,53 @@ var maxSecondsProcessed = TimeSpan.FromMinutes(10).TotalSeconds;
 var bombaSubtitles = new List<BombaSubtitles>();
 foreach (var videoUrl in videoUrls)
 {
-    Console.WriteLine();
-    
-    // TODO: add logging
     var video = await Youtube.GetVideo(videoUrl);
     if (video == null)
     {
-        Console.WriteLine($"Could not find video: {videoUrl}");
+        Log.Logger.Warning($"Could not find video: {videoUrl}");
         continue;
     }
 
     var videoId = VideoId.Parse(videoUrl).ToString();
     if (videoIdsInDb.Contains(videoId))
     {
-        Console.WriteLine($"{videoId}: Subtitles already in db for video: \"{video.Title}\". Skipping.");
+        Log.Logger.Information($"{videoId}: Subtitles already in db for video: \"{video.Title}\". Skipping.");
         continue;
     }
     
-    Console.WriteLine($"{videoId}: Attempting to get subtitles for video: \"{video.Title}\"");
+    Log.Logger.Information($"{videoId}: Attempting to get subtitles for video: \"{video.Title}\"");
         
     // Try to download YT captions first
     var subtitles = await Youtube.GetCaptionsForVideo(videoUrl);
     if (subtitles.Any())
     {
-        Console.WriteLine($"{videoId}: Found YouTube subtitles");
+        Log.Logger.Information($"{videoId}: Found YouTube subtitles");
         bombaSubtitles.AddRange(subtitles);
         continue;
     }
     
-    Console.WriteLine($"{videoId}: No YouTube subtitles found");
+    Log.Logger.Information($"{videoId}: No YouTube subtitles found");
 
     if (USE_AZURE_SPEECH_TO_TEXT)
     {
         // If no YT captions are available, attempt to use Azure Speech-to-Text
-        Console.WriteLine($"{videoId}: Attempting to use Azure AI to recognize speech for video: \"{video.Title}\"");
+        Log.Logger.Information($"{videoId}: Attempting to use Azure AI to recognize speech for video: \"{video.Title}\"");
         var audioWavFilePath = await YoutubeDownloader.SaveAudioToWavFile(videoUrl);
         
         subtitles = await AzureSpeechToText.ProcessSpeechFromWavFile(audioWavFilePath);
         
         secondsProcessed += video.Duration?.TotalSeconds ?? 0;
-        Console.WriteLine($"{videoId}: Processed {secondsProcessed} seconds. Its {secondsProcessed / 60} minutes. Should not exceed {TimeSpan.FromSeconds(maxSecondsProcessed).TotalMinutes} minutes.");
+        Log.Logger.Information($"{videoId}: Processed {secondsProcessed} seconds. Its {secondsProcessed / 60} minutes. Should not exceed {TimeSpan.FromSeconds(maxSecondsProcessed).TotalMinutes} minutes.");
         
         if (secondsProcessed > maxSecondsProcessed)
         {
-            Console.WriteLine($"{videoId}: Stopping AI Speech recognition - AI processed limit reached.");
+            Log.Logger.Warning($"{videoId}: Stopping AI Speech recognition - AI processed limit reached.");
             USE_AZURE_SPEECH_TO_TEXT = false;
         }
         
         if (subtitles.Any())
         {
-            Console.WriteLine($"{videoId}: Subtitles found with Azure AI");
+            Log.Logger.Information($"{videoId}: Subtitles found with Azure AI");
             subtitles.ForEach(s =>
             {
                 s.VideoUrl = videoUrl;
@@ -99,17 +107,16 @@ foreach (var videoUrl in videoUrls)
             continue;
         }
         
-        Console.WriteLine($"{videoId}: No subtitles found with Azure AI");
+        Log.Logger.Information($"{videoId}: No subtitles found with Azure AI");
     }
 }
 
 if (bombaSubtitles.Any())
 {
-    Console.WriteLine($"Bomba Subtitles Found: {bombaSubtitles.Count}");
-    //var runId = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+    Log.Logger.Information($"Bomba Subtitles Found: {bombaSubtitles.Count}");
     await Persistence.SaveBombaSubtitlesToDb(bombaSubtitles, dbFileName);
 }
 else
 {
-    Console.WriteLine("No Bomba Subtitles Found");
+    Log.Logger.Information("No Bomba Subtitles Found");
 }

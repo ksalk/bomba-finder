@@ -1,4 +1,5 @@
 ﻿using NAudio.Wave;
+using Serilog;
 using YoutubeExplode;
 using YoutubeExplode.Playlists;
 using YoutubeExplode.Common;
@@ -30,7 +31,7 @@ public static class Youtube
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An error occurred in {nameof(GetVideoUrlsFromPlaylistUrl)} method: {ex.Message}");
+            Log.Logger.Error($"An error occurred in {nameof(GetVideoUrlsFromPlaylistUrl)} method: {ex.Message}");
         }
         return new List<string>();
     }
@@ -59,7 +60,7 @@ public static class Youtube
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An error occurred in {nameof(GetCaptionsForVideo)} method: {ex.Message}");
+            Log.Logger.Error($"An error occurred in {nameof(GetCaptionsForVideo)} method: {ex.Message}");
         }
         return [];
     }
@@ -78,7 +79,7 @@ public static class Youtube
 
         if(audioStreamInfo is null)
         {
-            Console.WriteLine($"No suitable audio stream found for: {video.Title}");
+            Log.Logger.Warning($"No suitable audio stream found for: {video.Title}");
             return string.Empty;
         }
 
@@ -86,7 +87,7 @@ public static class Youtube
         var audioFilePathMp3 = Path.Combine(Environment.CurrentDirectory, $"audio_{videoId}.mp3");
         await youtube.Videos.Streams.DownloadAsync(audioStreamInfo, audioFilePathMp3);
 
-        Console.WriteLine($"Audio downloaded successfully: {audioFilePathMp3}");
+        Log.Logger.Information($"Audio downloaded successfully: {audioFilePathMp3}");
 
         var audioFilePathWav = Path.ChangeExtension(audioFilePathMp3, "wav");
         ConvertMp3ToWav(audioFilePathMp3 , audioFilePathWav);

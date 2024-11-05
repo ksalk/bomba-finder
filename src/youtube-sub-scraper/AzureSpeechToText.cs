@@ -1,5 +1,6 @@
 ﻿using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
+using Serilog;
 using YoutubeExplode.Videos;
 using YoutubeSubScraper.Persistence;
 
@@ -48,22 +49,23 @@ public static class AzureSpeechToText
             if (e.Result.Reason == ResultReason.RecognizedSpeech && !string.IsNullOrWhiteSpace(e.Result.Text))
             {
                 subtitles.Add(new BombaSubtitles(string.Empty, string.Empty, new VideoId(), e.Result.Text, TimeSpan.FromTicks((long)e.Offset)));
+                Log.Logger.Debug($"Recognized: {e.Result.Text} with offset: {e.Offset}");
             }
             else if (e.Result.Reason == ResultReason.NoMatch)
             {
-                //Console.WriteLine("No speech could be recognized.");
+                Log.Logger.Debug("No speech could be recognized.");
             }
         };
 
         recognizer.Canceled += (s, e) =>
         {
-            //Console.WriteLine($"CANCELED: Reason={e.Reason}");
+            Log.Logger.Debug($"CANCELED: Reason={e.Reason}");
 
             if (e.Reason == CancellationReason.Error)
             {
-                Console.WriteLine($"CANCELED: ErrorCode={e.ErrorCode}");
-                Console.WriteLine($"CANCELED: ErrorDetails={e.ErrorDetails}");
-                Console.WriteLine("CANCELED: Did you update the subscription info?");
+                Log.Logger.Debug($"CANCELED: ErrorCode={e.ErrorCode}");
+                Log.Logger.Debug($"CANCELED: ErrorDetails={e.ErrorDetails}");
+                Log.Logger.Debug("CANCELED: Did you update the subscription info?");
             }
 
             stopRecognition.TrySetResult(0);
@@ -71,7 +73,7 @@ public static class AzureSpeechToText
 
         recognizer.SessionStopped += (s, e) =>
         {
-            //Console.WriteLine("Session stopped.");
+            Log.Logger.Debug("Speech Recognition Session stopped.");
             stopRecognition.TrySetResult(0);
         };
 
