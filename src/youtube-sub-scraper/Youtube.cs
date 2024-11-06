@@ -1,5 +1,7 @@
 ﻿using NAudio.Wave;
 using Serilog;
+using YoutubeDLSharp;
+using YoutubeDLSharp.Options;
 using YoutubeExplode;
 using YoutubeExplode.Playlists;
 using YoutubeExplode.Common;
@@ -64,36 +66,6 @@ public static class Youtube
         return [];
     }
     
-    public static async Task<string> SaveAudioToWavFile(string videoUrl)
-    {
-        var youtube = new YoutubeClient();
-        var videoId = VideoId.Parse(videoUrl);
-        var video = await youtube.Videos.GetAsync(videoId);
-        
-        var streamManifest = await youtube.Videos.Streams.GetManifestAsync(videoId);
-        var audioStreamInfo = streamManifest
-            .GetAudioOnlyStreams()
-            .OrderByDescending(s => s.Bitrate)
-            .FirstOrDefault();
-
-        if(audioStreamInfo is null)
-        {
-            Log.Logger.Warning($"No suitable audio stream found for: {video.Title}");
-            return string.Empty;
-        }
-
-        // Download the audio stream to a file
-        var audioFilePathMp3 = Path.Combine(Environment.CurrentDirectory, $"audio_{videoId}.mp3");
-        await youtube.Videos.Streams.DownloadAsync(audioStreamInfo, audioFilePathMp3);
-
-        Log.Logger.Information($"Audio downloaded successfully: {audioFilePathMp3}");
-
-        var audioFilePathWav = Path.ChangeExtension(audioFilePathMp3, "wav");
-        ConvertMp3ToWav(audioFilePathMp3 , audioFilePathWav);
-
-        return audioFilePathWav;
-    }
-    
     public static void ConvertMp3ToWav(string mp3File, string wavFile)
     {
         using (var reader = new MediaFoundationReader(mp3File))
@@ -101,5 +73,32 @@ public static class Youtube
         {
             reader.CopyTo(writer);
         }
+    }
+    
+    public static async Task<string> SaveAudioToWavFile(string videoUrl)
+    { 
+        var ytDlpFilepath = Path.Combine(Directory.GetCurrentDirectory(), "yt-dlp.exe");
+        var ffmpegFilepath = Path.Combine(Directory.GetCurrentDirectory(), "ffmpeg.exe");
+        
+        if(!File.Exists(ytDlpFilepath))
+            await YoutubeDLSharp.Utils.DownloadYtDlp();
+        if(!File.Exists(ffmpegFilepath))
+            await YoutubeDLSharp.Utils.DownloadFFmpeg();
+        
+        var ytdl = new YoutubeDL();
+        ytdl.YoutubeDLPath = ytDlpFilepath;
+        ytdl.FFmpegPath = ffmpegFilepath;
+        ytdl.OutputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputAudioFiles");
+
+        if (!Directory.Exists(ytdl.OutputFolder))
+            Directory.CreateDirectory(ytdl.OutputFolder);
+
+        var res = await ytdl.RunAudioDownload(
+            videoUrl,
+            AudioConversionFormat.Wav
+        );
+
+        string path = res.Data;
+        return path;
     }
 }

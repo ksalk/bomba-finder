@@ -83,7 +83,7 @@ foreach (var videoId in videoIds)
     {
         // If no YT captions are available, attempt to use Azure Speech-to-Text
         Log.Logger.Information($"{videoId}: Attempting to use Azure AI to recognize speech for video: \"{video.Title}\"");
-        var audioWavFilePath = await YoutubeDownloader.SaveAudioToWavFile(video.Url);
+        var audioWavFilePath = await Youtube.SaveAudioToWavFile(video.Url);
         
         subtitles = await AzureSpeechToText.ProcessSpeechFromWavFile(audioWavFilePath);
         
