@@ -5,51 +5,16 @@ using YoutubeExplode.Videos;
 using YoutubeSubScraper;
 using YoutubeSubScraper.Persistence;
 
-var runId = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
-    .WriteTo.File(Path.Combine(Directory.GetCurrentDirectory(), "Logs", $"log-{runId}.txt"),
-        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
-    .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Information)
-
-    .CreateLogger();
-
 bool USE_AZURE_SPEECH_TO_TEXT = true;
-const string dbFileName = "bomba-subtitles.db"; 
+const string dbFileName = "bomba-subtitles.db";
+var maxSecondsProcessed = TimeSpan.FromMinutes(10).TotalSeconds;
 
-var environment = Environment.GetEnvironmentVariable("NETCORE_ENVIRONMENT");
-var builder = new ConfigurationBuilder()
-    .AddJsonFile("appSettings.json")
-    .AddJsonFile($"appSettings.{environment}.json", optional: true);
+Initialize();
 
-var azureConfigSection = builder
-    .Build()
-    .GetSection("Azure");
-AzureSpeechToText.SetSubscriptionKey(azureConfigSection["SubscriptionKey"] ?? string.Empty);
-
-var playlistUrls = new List<string>()
-{
-    "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR"
-}; 
-var videoUrls = new List<string>()
-{
-    //"https://www.youtube.com/watch?v=Oykvszo9csA",
-    //"https://www.youtube.com/watch?v=2JWOdqS7fI4"
-};
-
-foreach (var playlistUrl in playlistUrls)
-    videoUrls.AddRange(await Youtube.GetVideoUrlsFromPlaylistUrl(playlistUrl));
-
-var videoIds = videoUrls
-    .Distinct()
-    .Select(VideoId.Parse)
-    .ToList();
-
+var videoIds = await GetVideoIdsForProcessing();
 var videoIdsInDb = await Persistence.GetVideoIdsFromDb(dbFileName);
 
 var secondsProcessed = 0.0;
-var maxSecondsProcessed = TimeSpan.FromMinutes(10).TotalSeconds;
-
 var bombaSubtitles = new List<BombaSubtitles>();
 foreach (var videoId in videoIds)
 {
@@ -121,4 +86,47 @@ if (bombaSubtitles.Any())
 else
 {
     Log.Logger.Information("No Bomba Subtitles Found");
+}
+
+async Task<List<VideoId>> GetVideoIdsForProcessing()
+{
+    var playlistUrls = new List<string>()
+    {
+        "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR"
+    }; 
+    var videoUrls = new List<string>()
+    {
+        //"https://www.youtube.com/watch?v=Oykvszo9csA",
+        //"https://www.youtube.com/watch?v=2JWOdqS7fI4"
+    };
+
+    foreach (var playlistUrl in playlistUrls)
+        videoUrls.AddRange(await Youtube.GetVideoUrlsFromPlaylistUrl(playlistUrl));
+
+    var list = videoUrls
+        .Distinct()
+        .Select(VideoId.Parse)
+        .ToList();
+    return list;
+}
+
+void Initialize()
+{
+    var runId = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+    Log.Logger = new LoggerConfiguration()
+        .MinimumLevel.Debug()
+        .WriteTo.File(Path.Combine(Directory.GetCurrentDirectory(), "Logs", $"log-{runId}.txt"),
+            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+        .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Information)
+        .CreateLogger();
+
+    var environment = Environment.GetEnvironmentVariable("NETCORE_ENVIRONMENT");
+    var builder = new ConfigurationBuilder()
+        .AddJsonFile("appSettings.json")
+        .AddJsonFile($"appSettings.{environment}.json", optional: true);
+
+    var azureConfigSection = builder
+        .Build()
+        .GetSection("Azure");
+    AzureSpeechToText.SetSubscriptionKey(azureConfigSection["SubscriptionKey"] ?? string.Empty);
 }
