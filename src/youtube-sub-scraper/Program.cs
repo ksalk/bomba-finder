@@ -40,24 +40,26 @@ var videoUrls = new List<string>()
 foreach (var playlistUrl in playlistUrls)
     videoUrls.AddRange(await Youtube.GetVideoUrlsFromPlaylistUrl(playlistUrl));
 
-// TODO: make this a collection of videoIds or videoContexts, not urls
-videoUrls = videoUrls.Distinct().ToList();
+var videoIds = videoUrls
+    .Distinct()
+    .Select(VideoId.Parse)
+    .ToList();
+
 var videoIdsInDb = await Persistence.GetVideoIdsFromDb(dbFileName);
 
 var secondsProcessed = 0.0;
 var maxSecondsProcessed = TimeSpan.FromMinutes(10).TotalSeconds;
 
 var bombaSubtitles = new List<BombaSubtitles>();
-foreach (var videoUrl in videoUrls)
+foreach (var videoId in videoIds)
 {
-    var video = await Youtube.GetVideo(videoUrl);
+    var video = await Youtube.GetVideo(videoId);
     if (video == null)
     {
-        Log.Logger.Warning($"Could not find video: {videoUrl}");
+        Log.Logger.Warning($"Could not find video with id: {videoId}");
         continue;
     }
 
-    var videoId = VideoId.Parse(videoUrl).ToString();
     if (videoIdsInDb.Contains(videoId))
     {
         Log.Logger.Information($"{videoId}: Subtitles already in db for video: \"{video.Title}\". Skipping.");
@@ -67,7 +69,7 @@ foreach (var videoUrl in videoUrls)
     Log.Logger.Information($"{videoId}: Attempting to get subtitles for video: \"{video.Title}\"");
         
     // Try to download YT captions first
-    var subtitles = await Youtube.GetCaptionsForVideo(videoUrl);
+    var subtitles = await Youtube.GetCaptionsForVideo(video.Url);
     if (subtitles.Any())
     {
         Log.Logger.Information($"{videoId}: Found YouTube subtitles");
@@ -81,7 +83,7 @@ foreach (var videoUrl in videoUrls)
     {
         // If no YT captions are available, attempt to use Azure Speech-to-Text
         Log.Logger.Information($"{videoId}: Attempting to use Azure AI to recognize speech for video: \"{video.Title}\"");
-        var audioWavFilePath = await YoutubeDownloader.SaveAudioToWavFile(videoUrl);
+        var audioWavFilePath = await YoutubeDownloader.SaveAudioToWavFile(video.Url);
         
         subtitles = await AzureSpeechToText.ProcessSpeechFromWavFile(audioWavFilePath);
         
@@ -99,7 +101,7 @@ foreach (var videoUrl in videoUrls)
             Log.Logger.Information($"{videoId}: Subtitles found with Azure AI");
             subtitles.ForEach(s =>
             {
-                s.VideoUrl = videoUrl;
+                s.VideoUrl = video.Url;
                 s.VideoId = videoId;
                 s.Title = video.Title;
             });

@@ -3,6 +3,7 @@ using YoutubeDLSharp.Options;
 
 namespace YoutubeSubScraper;
 
+// TODO: merge this with Youtube class
 public static class YoutubeDownloader
 {
     public static async Task<string> SaveAudioToWavFile(string videoUrl)

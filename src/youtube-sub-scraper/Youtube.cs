@@ -10,10 +10,9 @@ namespace YoutubeSubScraper;
 
 public static class Youtube
 {
-    public static async Task<Video?> GetVideo(string videoUrl)
+    public static async Task<Video?> GetVideo(VideoId videoId)
     {
         var youtubeClient = new YoutubeClient();
-        var videoId = VideoId.Parse(videoUrl);
         return await youtubeClient.Videos.GetAsync(videoId);
     }
 
