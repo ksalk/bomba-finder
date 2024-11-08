@@ -64,12 +64,7 @@ foreach (var videoId in videoIds)
         if (subtitles.Any())
         {
             Log.Logger.Information($"{videoId}: Subtitles found with Azure AI");
-            subtitles.ForEach(s =>
-            {
-                s.VideoUrl = video.Url;
-                s.VideoId = videoId;
-                s.Title = video.Title;
-            });
+            subtitles.ForEach(s => s.UpdateVideoDetails(video));
             bombaSubtitles.AddRange(subtitles);
             continue;
         }

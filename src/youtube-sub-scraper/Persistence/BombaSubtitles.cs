@@ -6,9 +6,9 @@ namespace YoutubeSubScraper.Persistence;
 public class BombaSubtitles
 {
     public Guid Id { get; private set; }
-    public string Title { get; set; }
-    public string VideoUrl { get; set; }
-    public string VideoId { get; set; }
+    public string Title { get; private set; }
+    public string VideoUrl { get; private set; }
+    public string VideoId { get; private set; }
     public string Subtitles { get; private set; }
     public TimeSpan Offset { get; private set; }
 
@@ -22,6 +22,13 @@ public class BombaSubtitles
         Offset = offset;
 
         RemoveUnneededCharactersFromSubtitles();
+    }
+
+    public void UpdateVideoDetails(Video video)
+    {
+        VideoUrl = video.Url;
+        VideoId = video.Id;
+        Title = video.Title;
     }
 
     private void RemoveUnneededCharactersFromSubtitles()
