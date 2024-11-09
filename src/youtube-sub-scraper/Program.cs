@@ -5,7 +5,7 @@ using YoutubeExplode.Videos;
 using YoutubeSubScraper;
 using YoutubeSubScraper.Persistence;
 
-bool USE_AZURE_SPEECH_TO_TEXT = true;
+bool useAzureSpeechToText = true;
 const string dbFileName = "bomba-subtitles.db";
 var maxSecondsProcessed = TimeSpan.FromMinutes(10).TotalSeconds;
 
@@ -44,7 +44,7 @@ foreach (var videoId in videoIds)
     
     Log.Logger.Information($"{videoId}: No YouTube subtitles found");
 
-    if (USE_AZURE_SPEECH_TO_TEXT)
+    if (useAzureSpeechToText)
     {
         // If no YT captions are available, attempt to use Azure Speech-to-Text
         Log.Logger.Information($"{videoId}: Attempting to use Azure AI to recognize speech for video: \"{video.Title}\"");
@@ -58,7 +58,7 @@ foreach (var videoId in videoIds)
         if (secondsProcessed > maxSecondsProcessed)
         {
             Log.Logger.Warning($"{videoId}: Stopping AI Speech recognition - AI processed limit reached.");
-            USE_AZURE_SPEECH_TO_TEXT = false;
+            useAzureSpeechToText = false;
         }
         
         if (subtitles.Any())
