@@ -11,6 +11,8 @@ var maxSecondsProcessed = TimeSpan.FromMinutes(10).TotalSeconds;
 
 Initialize();
 
+Log.Logger.Information("Starting up Youtube Sub Scraper");
+
 var videoIds = await GetVideoIdsForProcessing();
 var videoIdsInDb = await Persistence.GetVideoIdsFromDb(dbFileName);
 
@@ -18,6 +20,7 @@ var secondsProcessed = 0.0;
 var bombaSubtitles = new List<BombaSubtitles>();
 foreach (var videoId in videoIds)
 {
+    Log.Logger.Information($"{videoId}: Attempting to retrieve video details from Youtube.");
     var video = await Youtube.GetVideo(videoId);
     if (video == null)
     {
@@ -73,15 +76,10 @@ foreach (var videoId in videoIds)
     }
 }
 
-if (bombaSubtitles.Any())
-{
-    Log.Logger.Information($"Bomba Subtitles Found: {bombaSubtitles.Count}");
-    await Persistence.SaveBombaSubtitlesToDb(bombaSubtitles, dbFileName);
-}
-else
-{
-    Log.Logger.Information("No Bomba Subtitles Found");
-}
+Log.Logger.Information($"Subtitles found: {bombaSubtitles.Count}. Saving to {dbFileName}");
+await Persistence.SaveBombaSubtitlesToDb(bombaSubtitles, dbFileName);
+
+Log.Logger.Information("Processing finished");
 
 async Task<List<VideoId>> GetVideoIdsForProcessing()
 {
