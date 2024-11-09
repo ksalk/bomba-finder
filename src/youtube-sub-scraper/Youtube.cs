@@ -27,7 +27,7 @@ public static class Youtube
             var videos = await youtube.Playlists.GetVideosAsync(playlistId);
 
             return videos
-                .Select(video => $"https://www.youtube.com/watch?v={video.Id}")
+                .Select(video => video.Url)
                 .ToList();
         }
         catch (Exception ex)
