@@ -86,21 +86,16 @@ async Task<List<VideoId>> GetVideoIdsForProcessing()
     var playlistUrls = new List<string>()
     {
         "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR"
-    }; 
-    var videoUrls = new List<string>()
-    {
-        //"https://www.youtube.com/watch?v=Oykvszo9csA",
-        //"https://www.youtube.com/watch?v=2JWOdqS7fI4"
     };
+    var videoUrls = new List<string>() { };
 
     foreach (var playlistUrl in playlistUrls)
         videoUrls.AddRange(await Youtube.GetVideoUrlsFromPlaylistUrl(playlistUrl));
 
-    var list = videoUrls
+    return videoUrls
         .Distinct()
         .Select(VideoId.Parse)
         .ToList();
-    return list;
 }
 
 void Initialize()
