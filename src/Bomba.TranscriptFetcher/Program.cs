@@ -1,24 +1,25 @@
 ﻿
 using Bomba.DB;
 
-var EXTRACT_SCRIPTS = false;
+var EXTRACT_SCRIPTS = true;
 
 var bombaDb = new BombaDbContext();
 await bombaDb.Database.EnsureCreatedAsync();
 
 if (EXTRACT_SCRIPTS)
 {
+    Console.WriteLine("[MAIN] Starting script extraction process...");
     var videoPlaylist = "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR";
     var videosMetadata = await YoutubeMetadataDownloader.GetPlaylistVideosAsync(videoPlaylist);
 
     foreach (var videoMetadata in videosMetadata)
     {
-        Console.WriteLine($"Processing video: {videoMetadata}");
+        Console.WriteLine($"[MAIN] Processing video: {videoMetadata}");
 
         var script = await TryGettingVideoScript(videoMetadata);
         if (script is null)
         {
-            Console.WriteLine($"Failed to extract script for video: {videoMetadata}");
+            Console.WriteLine($"[MAIN] Failed to extract script for video: {videoMetadata}");
             continue;
         }
 
@@ -42,8 +43,11 @@ if (EXTRACT_SCRIPTS)
             bombaDb.VideoScripts.Add(videoEntry);
         }
 
+        Console.WriteLine($"[MAIN] Successfully processed video: {videoMetadata}");
         await bombaDb.SaveChangesAsync();
     }
+
+    Console.WriteLine("[MAIN] Script extraction process completed.");
 }
 
 //var allScripts = bombaDb.VideoScripts.ToList();
