@@ -11,7 +11,7 @@ if (EXTRACT_SCRIPTS)
     var videoPlaylist = "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR";
     var videosMetadata = await YoutubeMetadataDownloader.GetPlaylistVideosAsync(videoPlaylist);
 
-    foreach (var videoMetadata in videosMetadata.Take(5))
+    foreach (var videoMetadata in videosMetadata)
     {
         Console.WriteLine($"Processing video: {videoMetadata}");
 
@@ -23,21 +23,31 @@ if (EXTRACT_SCRIPTS)
         }
 
         // Store the extracted script in the database
-        var videoEntry = new VideoScript
+        var existingEntry = bombaDb.VideoScripts.FirstOrDefault(vs => vs.VideoId == videoMetadata.Id);
+        if (existingEntry != null)
         {
-            VideoId = videoMetadata.Id,
-            Title = videoMetadata.Title,
-            VideoUrl = videoMetadata.Url,
-            Transcript = script.Text,
-            Segments = script.Segments.ToList()
-        };
-        bombaDb.VideoScripts.Add(videoEntry);
+            existingEntry.Transcript = script.Text;
+            existingEntry.Segments = script.Segments.ToList();
+        }
+        else
+        {
+            var videoEntry = new VideoScript
+            {
+                VideoId = videoMetadata.Id,
+                Title = videoMetadata.Title,
+                VideoUrl = videoMetadata.Url,
+                Transcript = script.Text,
+                Segments = script.Segments.ToList()
+            };
+            bombaDb.VideoScripts.Add(videoEntry);
+        }
+
         await bombaDb.SaveChangesAsync();
     }
 }
 
-var allScripts = bombaDb.VideoScripts.ToList();
-Console.WriteLine($"Total scripts extracted and stored in DB: {allScripts.Count}");
+//var allScripts = bombaDb.VideoScripts.ToList();
+//Console.WriteLine($"Total scripts extracted and stored in DB: {allScripts.Count}");
 
 
 // 2.5 Consider transcript chunking for better context handling and retrieval
