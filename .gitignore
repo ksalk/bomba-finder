@@ -404,3 +404,10 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Whisper model files
+*.bin
+
+# Local audio files
+*.wav
+*.mp3
