@@ -1,3 +1,5 @@
+using Bomba.DB;
+
 public static class SubtitlesTranscriber
 {
     public static async Task<ExtractedScript> Transcribe(string subtitlesFilePath)

@@ -1,3 +1,4 @@
+using Bomba.DB;
 using Whisper.net;
 
 public static class AudioTranscriber

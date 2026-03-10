@@ -1,5 +1,6 @@
-using System.ComponentModel.DataAnnotations.Schema;
 using Pgvector;
+
+namespace Bomba.DB;
 
 public class ScriptChunk
 {

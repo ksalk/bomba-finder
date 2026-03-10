@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 
+namespace Bomba.DB;
+
 public class BombaDbContext : DbContext
 {
     public DbSet<VideoScript> VideoScripts { get; set; }

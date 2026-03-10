@@ -1,3 +1,5 @@
+namespace Bomba.DB;
+
 public class VideoScript
 {
     public Guid Id { get; set; }
