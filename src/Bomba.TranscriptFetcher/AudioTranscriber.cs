@@ -4,17 +4,17 @@ public static class AudioTranscriber
 {
     private static readonly Lazy<WhisperProcessor> whisperProcessor = new(() => GetWhisperProcessor());
 
-    public static async Task<TranscriptionResult> Transcribe(Stream audioStream)
+    public static async Task<ExtractedScript> Transcribe(Stream audioStream)
     {
-        var segments = new List<SegmentData>();
+        var segments = new List<ScriptSegment>();
 
         await foreach (var segment in whisperProcessor.Value.ProcessAsync(audioStream))
         {
-            segments.Add(segment);
+            segments.Add(new ScriptSegment(segment.Text, segment.Start, segment.End));
         }
 
         Console.WriteLine();
-        return new TranscriptionResult
+        return new ExtractedScript
         {
             Text = string.Concat(segments.Select(s => s.Text)).Trim(),
             Segments = segments
@@ -31,10 +31,4 @@ public static class AudioTranscriber
             .WithLanguage("pl")
             .Build();
     }
-}
-
-public class TranscriptionResult
-{
-    public required string Text { get; set; }
-    public required IReadOnlyList<SegmentData> Segments { get; set; }
 }
