@@ -1,33 +1,44 @@
 ﻿
 using Bomba.DB;
 
-var videoPlaylist = "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR";
-var videosMetadata = await YoutubeMetadataDownloader.GetPlaylistVideosAsync(videoPlaylist);
+var EXTRACT_SCRIPTS = false;
+
 var bombaDb = new BombaDbContext();
+await bombaDb.Database.EnsureCreatedAsync();
 
-foreach (var videoMetadata in videosMetadata)
+if (EXTRACT_SCRIPTS)
 {
-    Console.WriteLine($"Processing video: {videoMetadata}");
+    var videoPlaylist = "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR";
+    var videosMetadata = await YoutubeMetadataDownloader.GetPlaylistVideosAsync(videoPlaylist);
 
-    var script = await TryGettingVideoScript(videoMetadata);
-    if(script is null)
+    foreach (var videoMetadata in videosMetadata.Take(5))
     {
-        Console.WriteLine($"Failed to extract script for video: {videoMetadata}");
-        continue;
+        Console.WriteLine($"Processing video: {videoMetadata}");
+
+        var script = await TryGettingVideoScript(videoMetadata);
+        if (script is null)
+        {
+            Console.WriteLine($"Failed to extract script for video: {videoMetadata}");
+            continue;
+        }
+
+        // Store the extracted script in the database
+        var videoEntry = new VideoScript
+        {
+            VideoId = videoMetadata.Id,
+            Title = videoMetadata.Title,
+            VideoUrl = videoMetadata.Url,
+            Transcript = script.Text,
+            Segments = script.Segments.ToList()
+        };
+        bombaDb.VideoScripts.Add(videoEntry);
+        await bombaDb.SaveChangesAsync();
     }
-
-    // Store the extracted script in the database
-    var videoEntry = new VideoScript
-    {
-        VideoId = videoMetadata.Id,
-        Title = videoMetadata.Title,
-        VideoUrl = videoMetadata.Url,
-        Transcript = script.Text,
-        Segments = script.Segments.ToList()
-    };
-    bombaDb.VideoScripts.Add(videoEntry);
-    await bombaDb.SaveChangesAsync();
 }
+
+var allScripts = bombaDb.VideoScripts.ToList();
+Console.WriteLine($"Total scripts extracted and stored in DB: {allScripts.Count}");
+
 
 // 2.5 Consider transcript chunking for better context handling and retrieval
 
