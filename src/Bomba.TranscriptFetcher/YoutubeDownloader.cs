@@ -17,6 +17,21 @@ public static class YoutubeDownloader
         }
     }
 
+    public static async Task DownloadSubtitles(string videoUrl, string outputPath)
+    {
+        var arguments = $"-f best --write-subs --sub-lang pl --skip-download -o \"{outputPath}\" {videoUrl}";
+        try
+        {
+            await RunYtDlp(arguments);
+            Console.WriteLine($"[YT] Subtitles downloaded for video {videoUrl} to {outputPath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[YT] Error downloading subtitles for video {videoUrl}: {ex.Message}");
+            throw;
+        }
+    }
+
     private static async Task<string> RunYtDlp(string arguments)
     {
         Console.WriteLine($"[YT] Running yt-dlp with arguments: {arguments}");

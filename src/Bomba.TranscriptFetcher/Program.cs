@@ -7,7 +7,7 @@ await YoutubeDownloader.DownloadAudio(videoUrl, outputPath);
 // 2. Transcribe audio to text using Whisper.NET
 var audioStream = File.OpenRead(outputPath);
 var transcript = await AudioTranscriber.Transcribe(audioStream);
-Console.WriteLine(transcript);
+Console.WriteLine(transcript.Text);
 
 // 2.5 Consider transcript chunking for better context handling and retrieval
 
