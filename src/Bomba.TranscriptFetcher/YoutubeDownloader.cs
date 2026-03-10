@@ -23,7 +23,13 @@ public static class YoutubeDownloader
         var arguments = $"-f best --write-subs --sub-lang pl --skip-download -o \"{outputPath}\" {videoUrl}";
         try
         {
-            await RunYtDlp(arguments);
+            var stdout = await RunYtDlp(arguments);
+            if(stdout.Contains("There are no subtitles for the requested languages"))
+            {
+                Console.WriteLine($"[YT] No subtitles available for video {videoUrl}");
+                return false;
+            }
+            
             Console.WriteLine($"[YT] Subtitles downloaded for video {videoUrl} to {outputPath}");
             return true;
         }
