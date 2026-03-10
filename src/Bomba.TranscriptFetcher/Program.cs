@@ -1,6 +1,9 @@
 ﻿
+using Bomba.DB;
+
 var videoPlaylist = "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR";
 var videosMetadata = await YoutubeMetadataDownloader.GetPlaylistVideosAsync(videoPlaylist);
+var bombaDb = new BombaDbContext();
 
 foreach (var videoMetadata in videosMetadata)
 {
@@ -12,6 +15,18 @@ foreach (var videoMetadata in videosMetadata)
         Console.WriteLine($"Failed to extract script for video: {videoMetadata}");
         continue;
     }
+
+    // Store the extracted script in the database
+    var videoEntry = new VideoScript
+    {
+        VideoId = videoMetadata.Id,
+        Title = videoMetadata.Title,
+        VideoUrl = videoMetadata.Url,
+        Transcript = script.Text,
+        Segments = script.Segments.ToList()
+    };
+    bombaDb.VideoScripts.Add(videoEntry);
+    await bombaDb.SaveChangesAsync();
 }
 
 // 2.5 Consider transcript chunking for better context handling and retrieval
