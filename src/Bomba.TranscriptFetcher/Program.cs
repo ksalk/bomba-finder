@@ -1,33 +1,48 @@
 ﻿
-var videoUrl = "https://www.youtube.com/watch?v=d4mH_k437jM";
-//var videoUrl = "https://www.youtube.com/watch?v=HJHxU_QPD5c"; // yeti
+var videoPlaylist = "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR";
+var videosMetadata = await YoutubeMetadataDownloader.GetPlaylistVideosAsync(videoPlaylist);
 
-// 0. Try downloading subtitles first, if available, to save time and resources
-var subtitleOutputPath = "output/subtitles.srt";
-var subtitlesDownloaded = await YoutubeDownloader.DownloadSubtitles(videoUrl, subtitleOutputPath);
-var extractedScript = subtitlesDownloaded
-    ? await SubtitlesTranscriber.Transcribe(subtitleOutputPath)
-    : null;
-
-if (extractedScript is null)
+foreach (var videoMetadata in videosMetadata)
 {
-    Console.WriteLine("[MAIN] No subtitles available, falling back to audio transcription...");
-    // 1. Fetch video -> audio from YT
-    var outputPath = "output/audio.wav";
-    var audioDownloaded = await YoutubeDownloader.DownloadAudio(videoUrl, outputPath);
+    Console.WriteLine($"Processing video: {videoMetadata}");
 
-    if (!audioDownloaded)
+    var script = await TryGettingVideoScript(videoMetadata);
+    if(script is null)
     {
-        Console.WriteLine("[MAIN] Failed to download audio, cannot proceed with transcription.");
-        return;
+        Console.WriteLine($"Failed to extract script for video: {videoMetadata}");
+        continue;
     }
-
-    // 2. Transcribe audio to text using Whisper.NET
-    var audioStream = File.OpenRead(outputPath);
-    extractedScript = await AudioTranscriber.Transcribe(audioStream);
-    //Console.WriteLine(extractedScript.Text);
 }
 
 // 2.5 Consider transcript chunking for better context handling and retrieval
 
 // 3. Store trascript to VectorDB
+
+
+async Task<ExtractedScript?> TryGettingVideoScript(YoutubeVideoMetadata videoMetadata)
+{
+    // Try downloading subtitles first, if available, to save time and resources
+    var subtitleOutputPath = $"output/subtitles-{videoMetadata.Id}.srt";
+    var subtitlesDownloaded = await YoutubeDownloader.DownloadSubtitles(videoMetadata.Url, subtitleOutputPath);
+    if (subtitlesDownloaded)
+    {
+        var extractedScript = await SubtitlesTranscriber.Transcribe(subtitleOutputPath);
+        return extractedScript;
+    }
+
+    Console.WriteLine("[MAIN] No subtitles available, falling back to audio transcription...");
+
+    // Fetch audio from YT
+    var outputPath = $"output/audio-{videoMetadata.Id}.wav";
+    var audioDownloaded = await YoutubeDownloader.DownloadAudio(videoMetadata.Url, outputPath);
+
+    if (!audioDownloaded)
+    {
+        Console.WriteLine("[MAIN] Failed to download audio, cannot proceed with transcription.");
+        return null;
+    }
+
+    // Transcribe audio to text using Whisper.NET
+    var audioStream = File.OpenRead(outputPath);
+    return await AudioTranscriber.Transcribe(audioStream);
+}
