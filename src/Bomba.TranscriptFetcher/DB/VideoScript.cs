@@ -8,4 +8,6 @@ public class VideoScript
     // As JSONB in DB
     public List<ScriptSegment> Segments { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    public virtual List<ScriptChunk> Chunks { get; set; }
 }
