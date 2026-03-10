@@ -2,6 +2,9 @@
 using Bomba.DB;
 
 var EXTRACT_SCRIPTS = true;
+var EXTRACT_ONLY_MISSING = false; // TODO: handle extracting only missing scripts
+
+// TODO: export / import scripts as JSON to avoid re-processing during development and testing
 
 var bombaDb = new BombaDbContext();
 await bombaDb.Database.EnsureCreatedAsync();
