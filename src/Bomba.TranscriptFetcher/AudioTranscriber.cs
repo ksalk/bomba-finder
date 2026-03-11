@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Bomba.DB;
 using Whisper.net;
 
@@ -7,6 +8,7 @@ public static class AudioTranscriber
 
     public static async Task<ExtractedScript> Transcribe(Stream audioStream)
     {
+        var startTimestamp = Stopwatch.GetTimestamp();
         var segments = new List<ScriptSegment>();
 
         await foreach (var segment in whisperProcessor.Value.ProcessAsync(audioStream))
@@ -15,6 +17,9 @@ public static class AudioTranscriber
         }
 
         Console.WriteLine();
+        var transcriptionDuration = Stopwatch.GetElapsedTime(startTimestamp);
+        Console.WriteLine($"[STT] Transcription completed in {transcriptionDuration.TotalSeconds:F2} seconds.");
+
         return new ExtractedScript
         {
             Text = string.Concat(segments.Select(s => s.Text)).Trim(),
