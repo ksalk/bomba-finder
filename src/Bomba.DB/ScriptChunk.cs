@@ -11,4 +11,9 @@ public class ScriptChunk
     public TimeSpan Start { get; set; }
     public TimeSpan End { get; set; }
     public Vector? Embedding { get; set; }
+
+    public override string ToString()
+    {
+        return $"Chunk: {Text}, Start: {Start}, End: {End}";
+    }
 }

@@ -2,7 +2,7 @@
 using System.Text.Json;
 using Bomba.DB;
 
-var EXTRACT_SCRIPTS = true;
+var EXTRACT_SCRIPTS = false;
 var EXTRACT_ONLY_MISSING = true;
 var SHOW_SKIP_INFO = false;
 
@@ -76,11 +76,17 @@ foreach (var missingVideo in missingVideos)
     Console.WriteLine($"[MAIN] Missing video in DB: {missingVideo}");
 }
 
-//var allScripts = bombaDb.VideoScripts.ToList();
-//Console.WriteLine($"Total scripts extracted and stored in DB: {allScripts.Count}");
-
-
 // 2.5 Consider transcript chunking for better context handling and retrieval
+var firstVideoWithScript = bombaDb.VideoScripts.FirstOrDefault();
+if (firstVideoWithScript != null)
+{
+    var chunks = ScriptChunker.GetScriptChunks(firstVideoWithScript);
+    Console.WriteLine($"[MAIN] Script chunking done for video: {firstVideoWithScript.VideoId}");
+
+    firstVideoWithScript.Chunks.Clear();
+    firstVideoWithScript.Chunks.AddRange(chunks);
+    await bombaDb.SaveChangesAsync();
+}
 
 // 3. Store trascript to VectorDB
 
