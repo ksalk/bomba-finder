@@ -11,7 +11,7 @@ public class VideoScript
 
     public List<ScriptSegment> Segments { get; set; }
 
-    public virtual List<ScriptChunk> Chunks { get; set; }
+    public virtual List<ScriptChunk> Chunks { get; set; } = new List<ScriptChunk>();
 
 }
 
