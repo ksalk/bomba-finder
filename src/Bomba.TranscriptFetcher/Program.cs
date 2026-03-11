@@ -91,15 +91,16 @@ async Task<ExtractedScript?> TryGettingVideoScript(YoutubeVideoMetadata videoMet
     var downloadedSubtitlePath = await YoutubeDownloader.DownloadSubtitles(videoMetadata.Url);
     if (downloadedSubtitlePath != null)
     {
-        var extractedScript = await SubtitlesTranscriber.Transcribe(downloadedSubtitlePath);
-        return extractedScript;
+        var extractedSubtitlesScript = await SubtitlesTranscriber.Transcribe(downloadedSubtitlePath);
+        File.Delete(downloadedSubtitlePath);
+        return extractedSubtitlesScript;
     }
 
     Console.WriteLine("[MAIN] No subtitles available, falling back to audio transcription...");
 
     // Fetch audio from YT
-    var outputPath = $"output/audio-{videoMetadata.Id}.wav";
-    var audioDownloaded = await YoutubeDownloader.DownloadAudio(videoMetadata.Url, outputPath);
+    var audioOutputPath = $"output/audio-{videoMetadata.Id}.wav";
+    var audioDownloaded = await YoutubeDownloader.DownloadAudio(videoMetadata.Url, audioOutputPath);
     if (!audioDownloaded)
     {
         Console.WriteLine("[MAIN] Failed to download audio, cannot proceed with transcription.");
@@ -107,8 +108,9 @@ async Task<ExtractedScript?> TryGettingVideoScript(YoutubeVideoMetadata videoMet
     }
 
     // Transcribe audio to text using Whisper.NET
-    var audioStream = File.OpenRead(outputPath);
-    return await AudioTranscriber.Transcribe(audioStream);
+    var extractedScript = await AudioTranscriber.Transcribe(audioOutputPath);
+    File.Delete(audioOutputPath);
+    return extractedScript;
 }
 
 async Task ExportBombaDbToJson(string filePath)

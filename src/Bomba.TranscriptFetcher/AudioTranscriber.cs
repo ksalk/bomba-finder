@@ -6,8 +6,9 @@ public static class AudioTranscriber
 {
     private static readonly Lazy<WhisperProcessor> whisperProcessor = new(() => GetWhisperProcessor());
 
-    public static async Task<ExtractedScript> Transcribe(Stream audioStream)
+    public static async Task<ExtractedScript> Transcribe(string audioFilePath)
     {
+        using var audioStream = File.OpenRead(audioFilePath);
         var startTimestamp = Stopwatch.GetTimestamp();
         var segments = new List<ScriptSegment>();
 
