@@ -4,24 +4,27 @@ using Bomba.DB;
 
 var EXTRACT_SCRIPTS = true;
 var EXTRACT_ONLY_MISSING = true;
+var SHOW_SKIP_INFO = false;
 
 // TODO: export / import scripts as JSON to avoid re-processing during development and testing
 
 var bombaDb = new BombaDbContext();
 await bombaDb.Database.EnsureCreatedAsync();
 
+var videoPlaylist = "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR";
+var videosMetadata = await YoutubeMetadataDownloader.GetPlaylistVideosAsync(videoPlaylist);
+
 if (EXTRACT_SCRIPTS)
 {
     Console.WriteLine("[MAIN] Starting script extraction process...");
-    var videoPlaylist = "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR";
-    var videosMetadata = await YoutubeMetadataDownloader.GetPlaylistVideosAsync(videoPlaylist);
 
     foreach (var videoMetadata in videosMetadata)
     {
         var existingEntry = bombaDb.VideoScripts.FirstOrDefault(vs => vs.VideoId == videoMetadata.Id);
         if (existingEntry != null && EXTRACT_ONLY_MISSING)
         {
-            Console.WriteLine($"[MAIN] Script already exists for video: {videoMetadata}, skipping...");
+            if(SHOW_SKIP_INFO)
+                Console.WriteLine($"[MAIN] Script already exists for video: {videoMetadata}, skipping...");
             continue;
         }
 
@@ -58,6 +61,19 @@ if (EXTRACT_SCRIPTS)
     }
 
     Console.WriteLine("[MAIN] Script extraction process completed.");
+}
+
+var allVideoIdsInDb = bombaDb.VideoScripts.Select(vs => vs.VideoId).ToHashSet();
+var missingVideos = videosMetadata.Where(vm => !allVideoIdsInDb.Contains(vm.Id)).ToList();
+
+if(missingVideos.Count > 0)
+{
+    Console.WriteLine($"[MAIN] {missingVideos.Count} videos from the playlist are missing in the database after processing:");
+}
+
+foreach (var missingVideo in missingVideos)
+{
+    Console.WriteLine($"[MAIN] Missing video in DB: {missingVideo}");
 }
 
 //var allScripts = bombaDb.VideoScripts.ToList();
