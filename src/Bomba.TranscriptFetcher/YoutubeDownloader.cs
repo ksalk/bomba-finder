@@ -2,10 +2,10 @@ public static class YoutubeDownloader
 {
     public static async Task<bool> DownloadAudio(string videoUrl, string outputPath)
     {
-        var arguments = $"-f bestaudio -x --audio-format wav --postprocessor-args \"-ar 16000 -ac 1\" -o \"{outputPath}\" {videoUrl}";
+        var arguments = $"-f \"bestaudio/best\" -x --audio-format wav --postprocessor-args \"-ar 16000 -ac 1\" -o \"{outputPath}\" {videoUrl}";
         try
         {
-            await YtDlp.RunAsync(arguments);
+            await YtDlp.RunAsync(GetCookiesArgument() + arguments);
             Console.WriteLine($"[YT] Audio downloaded for video {videoUrl} to {outputPath}");
             return true;
         }
@@ -21,7 +21,7 @@ public static class YoutubeDownloader
         var arguments = $"-f best --write-subs --sub-lang pl --skip-download -o \"output/%(title)s.%(ext)s\" {videoUrl}";
         try
         {
-            var stdout = await YtDlp.RunAsync(arguments);
+            var stdout = await YtDlp.RunAsync(GetCookiesArgument() + arguments);
             if (stdout.Contains("There are no subtitles for the requested languages"))
             {
                 Console.WriteLine($"[YT] No subtitles available for video {videoUrl}");
@@ -42,5 +42,14 @@ public static class YoutubeDownloader
             Console.WriteLine($"[YT] Error downloading subtitles for video {videoUrl}: {ex.Message}");
             return null;
         }
+    }
+
+    private static string GetCookiesArgument(string cookiesFilePath = "cookies.txt")
+    {
+        if (File.Exists(cookiesFilePath))
+        {
+            return $"--cookies {cookiesFilePath} ";
+        }
+        return string.Empty;
     }
 }
