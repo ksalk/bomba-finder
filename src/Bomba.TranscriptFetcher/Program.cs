@@ -1,8 +1,11 @@
 ﻿
 using System.Text.Json;
 using Bomba.DB;
+using Bomba.TranscriptFetcher;
 
 var EXTRACT_SCRIPTS = false;
+var CHUNK_SCRIPTS = true;
+var GENERATE_EMBEDDINGS = false;
 var EXTRACT_ONLY_MISSING = true;
 var SHOW_SKIP_INFO = false;
 
@@ -23,7 +26,7 @@ if (EXTRACT_SCRIPTS)
         var existingEntry = bombaDb.VideoScripts.FirstOrDefault(vs => vs.VideoId == videoMetadata.Id);
         if (existingEntry != null && EXTRACT_ONLY_MISSING)
         {
-            if(SHOW_SKIP_INFO)
+            if (SHOW_SKIP_INFO)
                 Console.WriteLine($"[MAIN] Script already exists for video: {videoMetadata}, skipping...");
             continue;
         }
@@ -63,10 +66,11 @@ if (EXTRACT_SCRIPTS)
     Console.WriteLine("[MAIN] Script extraction process completed.");
 }
 
-var allVideoIdsInDb = bombaDb.VideoScripts.Select(vs => vs.VideoId).ToHashSet();
+var allVideosInDb = bombaDb.VideoScripts.ToList();
+var allVideoIdsInDb = allVideosInDb.Select(vs => vs.VideoId).ToHashSet();
 var missingVideos = videosMetadata.Where(vm => !allVideoIdsInDb.Contains(vm.Id)).ToList();
 
-if(missingVideos.Count > 0)
+if (missingVideos.Count > 0)
 {
     Console.WriteLine($"[MAIN] {missingVideos.Count} videos from the playlist are missing in the database after processing:");
 }
@@ -76,20 +80,60 @@ foreach (var missingVideo in missingVideos)
     Console.WriteLine($"[MAIN] Missing video in DB: {missingVideo}");
 }
 
-// 2.5 Consider transcript chunking for better context handling and retrieval
-var firstVideoWithScript = bombaDb.VideoScripts.FirstOrDefault();
-if (firstVideoWithScript != null)
+// 3. Create transcript chunks and store it into DB for better context handling and retrieval
+if (CHUNK_SCRIPTS)
 {
-    var chunks = ScriptChunker.GetScriptChunks(firstVideoWithScript);
-    Console.WriteLine($"[MAIN] Script chunking done for video: {firstVideoWithScript.VideoId}");
+    foreach (var videoScript in allVideosInDb)
+    {
+        var chunks = ScriptChunker.GetScriptChunks(videoScript);
+        Console.WriteLine($"[MAIN] Script chunking done for video: {videoScript.VideoId}");
 
-    firstVideoWithScript.Chunks.Clear();
-    firstVideoWithScript.Chunks.AddRange(chunks);
-    await bombaDb.SaveChangesAsync();
+        videoScript.Chunks.Clear();
+        videoScript.Chunks.AddRange(chunks);
+        await bombaDb.SaveChangesAsync();
+    }
 }
+
+
 
 // 3. Store trascript to VectorDB
 
+// 4. Generate embeddings for chunks using OpenRouter API
+if (GENERATE_EMBEDDINGS)
+{
+    await GenerateAndStoreEmbeddingsAsync(bombaDb);
+}
+
+
+async Task GenerateAndStoreEmbeddingsAsync(BombaDbContext dbContext)
+{
+    Console.WriteLine("[MAIN] Starting embedding generation process...");
+    
+    OpenRouterEmbeddingService.Initialize();
+
+    var chunksWithoutEmbeddings = dbContext.ScriptChunks
+        .Where(c => c.Embedding == null)
+        .ToList();
+
+    if (chunksWithoutEmbeddings.Count == 0)
+    {
+        Console.WriteLine("[MAIN] No chunks without embeddings found.");
+        return;
+    }
+
+    Console.WriteLine($"[MAIN] Found {chunksWithoutEmbeddings.Count} chunks without embeddings.");
+
+    var texts = chunksWithoutEmbeddings.Select(c => c.Text).ToList();
+    var embeddings = await OpenRouterEmbeddingService.GenerateEmbeddingsAsync(texts);
+
+    for (var i = 0; i < chunksWithoutEmbeddings.Count; i++)
+    {
+        chunksWithoutEmbeddings[i].Embedding = embeddings[i];
+    }
+
+    await dbContext.SaveChangesAsync();
+    Console.WriteLine($"[MAIN] Successfully generated and stored embeddings for {chunksWithoutEmbeddings.Count} chunks.");
+}
 
 async Task<ExtractedScript?> TryGettingVideoScript(YoutubeVideoMetadata videoMetadata)
 {

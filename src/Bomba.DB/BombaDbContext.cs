@@ -40,6 +40,6 @@ public class BombaDbContext : DbContext
 
         modelBuilder.Entity<ScriptChunk>()
             .Property(s => s.Embedding)
-            .HasColumnType("vector(3)");
+            .HasColumnType("vector(3072)");
     }
 }
