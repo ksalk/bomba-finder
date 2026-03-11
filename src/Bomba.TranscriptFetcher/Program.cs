@@ -2,7 +2,7 @@
 using Bomba.DB;
 
 var EXTRACT_SCRIPTS = true;
-var EXTRACT_ONLY_MISSING = false; // TODO: handle extracting only missing scripts
+var EXTRACT_ONLY_MISSING = true;
 
 // TODO: export / import scripts as JSON to avoid re-processing during development and testing
 
@@ -17,6 +17,13 @@ if (EXTRACT_SCRIPTS)
 
     foreach (var videoMetadata in videosMetadata)
     {
+        var existingEntry = bombaDb.VideoScripts.FirstOrDefault(vs => vs.VideoId == videoMetadata.Id);
+        if (existingEntry != null && EXTRACT_ONLY_MISSING)
+        {
+            Console.WriteLine($"[MAIN] Script already exists for video: {videoMetadata}, skipping...");
+            continue;
+        }
+
         Console.WriteLine($"[MAIN] Processing video: {videoMetadata}");
 
         var script = await TryGettingVideoScript(videoMetadata);
@@ -26,8 +33,7 @@ if (EXTRACT_SCRIPTS)
             continue;
         }
 
-        // Store the extracted script in the database
-        var existingEntry = bombaDb.VideoScripts.FirstOrDefault(vs => vs.VideoId == videoMetadata.Id);
+        // Store the extracted script in the database        
         if (existingEntry != null)
         {
             existingEntry.Transcript = script.Text;
@@ -64,12 +70,11 @@ if (EXTRACT_SCRIPTS)
 
 async Task<ExtractedScript?> TryGettingVideoScript(YoutubeVideoMetadata videoMetadata)
 {
-    // Try downloading subtitles first, if available, to save time and resources
-    var subtitleOutputPath = $"output/subtitles-{videoMetadata.Id}.srt";
-    var subtitlesDownloaded = await YoutubeDownloader.DownloadSubtitles(videoMetadata.Url, subtitleOutputPath);
-    if (subtitlesDownloaded)
+    // Try downloading subtitles first, if available
+    var downloadedSubtitlePath = await YoutubeDownloader.DownloadSubtitles(videoMetadata.Url);
+    if (downloadedSubtitlePath != null)
     {
-        var extractedScript = await SubtitlesTranscriber.Transcribe(subtitleOutputPath);
+        var extractedScript = await SubtitlesTranscriber.Transcribe(downloadedSubtitlePath);
         return extractedScript;
     }
 
@@ -78,7 +83,6 @@ async Task<ExtractedScript?> TryGettingVideoScript(YoutubeVideoMetadata videoMet
     // Fetch audio from YT
     var outputPath = $"output/audio-{videoMetadata.Id}.wav";
     var audioDownloaded = await YoutubeDownloader.DownloadAudio(videoMetadata.Url, outputPath);
-
     if (!audioDownloaded)
     {
         Console.WriteLine("[MAIN] Failed to download audio, cannot proceed with transcription.");

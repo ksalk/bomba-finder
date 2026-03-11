@@ -7,9 +7,16 @@ public class VideoScript
     public string VideoId { get; set; }
     public string Title { get; set; }
     public string Transcript { get; set; }
-    // As JSONB in DB
+    public ExtractionType ExtractionType { get; set; }
+
     public List<ScriptSegment> Segments { get; set; }
-    public DateTime CreatedAt = DateTime.UtcNow;
 
     public virtual List<ScriptChunk> Chunks { get; set; }
+
+}
+
+public enum ExtractionType
+{
+    Subtitles,
+    STT
 }

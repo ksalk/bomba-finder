@@ -18,6 +18,7 @@ public static class AudioTranscriber
         return new ExtractedScript
         {
             Text = string.Concat(segments.Select(s => s.Text)).Trim(),
+            ExtractionType = ExtractionType.STT,
             Segments = segments
         };
     }
