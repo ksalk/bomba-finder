@@ -1,4 +1,5 @@
 ﻿
+using System.Text.Json;
 using Bomba.DB;
 
 var EXTRACT_SCRIPTS = true;
@@ -92,4 +93,11 @@ async Task<ExtractedScript?> TryGettingVideoScript(YoutubeVideoMetadata videoMet
     // Transcribe audio to text using Whisper.NET
     var audioStream = File.OpenRead(outputPath);
     return await AudioTranscriber.Transcribe(audioStream);
+}
+
+async Task ExportBombaDbToJson(string filePath)
+{
+    var allScripts = bombaDb.VideoScripts.ToList();
+    var json = JsonSerializer.Serialize(allScripts, new JsonSerializerOptions { WriteIndented = true });
+    await File.WriteAllTextAsync(filePath, json);
 }
