@@ -22,10 +22,14 @@ public static class ScriptChunker
 
                 var chunkText = string.Join(" ", chunkSegments.Select(s => s.Text)).Trim();
 
+                if(chunks.Any(c => c.Text == chunkText && c.Start == chunkSegments.First().Start && c.End == chunkSegments.Last().End))
+                    continue;
+
                 chunks.Add(new ScriptChunk
                 {
                     VideoScriptId = videoScript.Id,
                     Text = chunkText,
+                    NormalizedText = TextNormalizer.Normalize(chunkText),
                     Start = chunkSegments.First().Start,
                     End = chunkSegments.Last().End
                 });

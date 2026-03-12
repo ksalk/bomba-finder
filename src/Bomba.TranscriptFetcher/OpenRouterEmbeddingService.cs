@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Net.Http.Json;
 using Pgvector;
+using Bomba.DB;
 
 namespace Bomba.TranscriptFetcher;
 
@@ -14,7 +15,7 @@ public static class OpenRouterEmbeddingService
 
     public static void Initialize()
     {
-        var apiKey = Environment.GetEnvironmentVariable("OPENROUTER_API_KEY");
+        var apiKey = "";
         if (string.IsNullOrEmpty(apiKey))
         {
             throw new InvalidOperationException(
@@ -28,6 +29,44 @@ public static class OpenRouterEmbeddingService
         HttpClient.DefaultRequestHeaders.Add("X-Title", "Bomba Transcript Fetcher");
     }
 
+    public static async Task GenerateEmbeddingsForVideoScriptAsync(VideoScript videoScript)
+    {
+        if (videoScript.Chunks == null || videoScript.Chunks.Count == 0)
+        {
+            Console.WriteLine($"[EMBEDDING] No chunks found for VideoScript {videoScript.Id}");
+            return;
+        }
+
+        var texts = videoScript.Chunks.Select(c => c.Text).ToList();
+        var embeddings = await GenerateEmbeddingsAsync(texts);
+
+        for (int i = 0; i < videoScript.Chunks.Count; i++)
+        {
+            videoScript.Chunks[i].Embedding = embeddings[i];
+        }
+
+        await using var context = new BombaDbContext();
+        context.ScriptChunks.UpdateRange(videoScript.Chunks);
+        await context.SaveChangesAsync();
+
+        Console.WriteLine($"[EMBEDDING] Saved {embeddings.Count} embeddings for VideoScript {videoScript.Id}");
+    }
+
+    public static async Task GenerateEmbeddingsForScriptChunksAsync(List<ScriptChunk> scriptChunks)
+    {
+        var texts = scriptChunks.Select(c => c.Text).ToList();
+        var embeddings = await GenerateEmbeddingsAsync(texts);
+
+        for (int i = 0; i < scriptChunks.Count; i++)
+        {
+            scriptChunks[i].Embedding = embeddings[i];
+        }
+        
+        await using var context = new BombaDbContext();
+        context.ScriptChunks.UpdateRange(scriptChunks);
+        await context.SaveChangesAsync();
+    }
+
     public static async Task<List<Vector>> GenerateEmbeddingsAsync(List<string> texts)
     {
         var allEmbeddings = new List<Vector>();
@@ -38,7 +77,7 @@ public static class OpenRouterEmbeddingService
             var batchNumber = i / BatchSize + 1;
             var batch = texts.Skip(i).Take(BatchSize).ToList();
             
-            Console.WriteLine($"[EMBEDDING] Processing batch {batchNumber}/{totalBatches} ({batch.Count} texts)...");
+            //Console.WriteLine($"[EMBEDDING] Processing batch {batchNumber}/{totalBatches} ({batch.Count} texts)...");
 
             var batchEmbeddings = await GenerateBatchEmbeddingsWithRetryAsync(batch);
             allEmbeddings.AddRange(batchEmbeddings);

@@ -19,6 +19,7 @@ public class BombaDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasPostgresExtension("vector");
+        modelBuilder.HasPostgresExtension("pg_trgm");
 
         modelBuilder.Entity<VideoScript>()
             .HasKey(v => v.Id);
@@ -41,5 +42,10 @@ public class BombaDbContext : DbContext
         modelBuilder.Entity<ScriptChunk>()
             .Property(s => s.Embedding)
             .HasColumnType("vector(3072)");
+
+        modelBuilder.Entity<ScriptChunk>()
+            .HasIndex(e => e.NormalizedText)
+            .HasMethod("gin")
+            .HasOperators("gin_trgm_ops");
     }
 }
