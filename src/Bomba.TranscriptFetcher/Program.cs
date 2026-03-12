@@ -2,21 +2,28 @@ using System.Text.Json;
 using Bomba.DB;
 using Bomba.Embeddings;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
-var EXTRACT_SCRIPTS = true;
-var CHUNK_SCRIPTS = false;
-var GENERATE_EMBEDDINGS = false;
-var EXTRACT_ONLY_MISSING = true;
-var SHOW_SKIP_INFO = false;
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
+    .Build();
 
-// TODO: export / import scripts as JSON to avoid re-processing during development and testing
+var EXTRACT_SCRIPTS = configuration.GetValue<bool>("FeatureFlags:ExtractScripts", true);
+var CHUNK_SCRIPTS = configuration.GetValue<bool>("FeatureFlags:ChunkScripts", false);
+var GENERATE_EMBEDDINGS = configuration.GetValue<bool>("FeatureFlags:GenerateEmbeddings", false);
+var EXTRACT_ONLY_MISSING = configuration.GetValue<bool>("FeatureFlags:ExtractOnlyMissing", true);
+var SHOW_SKIP_INFO = configuration.GetValue<bool>("FeatureFlags:ShowSkipInfo", false);
+
+var openRouterApiKey = configuration.GetValue<string>("OpenRouterApiKey");
 
 var bombaDb = new BombaDbContext();
 await bombaDb.Database.EnsureCreatedAsync();
 
 var scriptExtractor = new ScriptExtractor(bombaDb);
 var scriptChunker = new ScriptChunker(bombaDb);
-var embeddingService = new OpenRouterEmbeddingService();
+var embeddingService = new OpenRouterEmbeddingService(openRouterApiKey);
 var scriptFinder = new ScriptFinder(bombaDb, embeddingService);
 
 if (EXTRACT_SCRIPTS)
