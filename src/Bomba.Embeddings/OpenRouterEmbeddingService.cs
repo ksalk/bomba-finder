@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Net.Http.Json;
 using Pgvector;
-using Bomba.DB;
 
 namespace Bomba.Embeddings;
 
@@ -26,44 +25,6 @@ public class OpenRouterEmbeddingService
         HttpClient.DefaultRequestHeaders.Clear();
         HttpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
         HttpClient.DefaultRequestHeaders.Add("X-Title", "Bomba Transcript Fetcher");
-    }
-
-    public async Task GenerateEmbeddingsForVideoScriptAsync(VideoScript videoScript)
-    {
-        if (videoScript.Chunks == null || videoScript.Chunks.Count == 0)
-        {
-            Console.WriteLine($"[EMBEDDING] No chunks found for VideoScript {videoScript.Id}");
-            return;
-        }
-
-        var texts = videoScript.Chunks.Select(c => c.Text).ToList();
-        var embeddings = await GenerateEmbeddingsAsync(texts);
-
-        for (int i = 0; i < videoScript.Chunks.Count; i++)
-        {
-            videoScript.Chunks[i].Embedding = embeddings[i];
-        }
-
-        await using var context = new BombaDbContext();
-        context.ScriptChunks.UpdateRange(videoScript.Chunks);
-        await context.SaveChangesAsync();
-
-        Console.WriteLine($"[EMBEDDING] Saved {embeddings.Count} embeddings for VideoScript {videoScript.Id}");
-    }
-
-    public async Task GenerateEmbeddingsForScriptChunksAsync(List<ScriptChunk> scriptChunks)
-    {
-        var texts = scriptChunks.Select(c => c.Text).ToList();
-        var embeddings = await GenerateEmbeddingsAsync(texts);
-
-        for (int i = 0; i < scriptChunks.Count; i++)
-        {
-            scriptChunks[i].Embedding = embeddings[i];
-        }
-        
-        await using var context = new BombaDbContext();
-        context.ScriptChunks.UpdateRange(scriptChunks);
-        await context.SaveChangesAsync();
     }
 
     public async Task<List<Vector>> GenerateEmbeddingsAsync(List<string> texts)

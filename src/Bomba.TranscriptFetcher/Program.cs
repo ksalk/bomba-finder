@@ -61,11 +61,20 @@ async Task GenerateAndStoreEmbeddingsAsync(BombaDbContext dbContext)
     var iterator = 0;
     foreach (var scriptChunk in scriptChunks.Chunk(10))
     {
-        await embeddingService.GenerateEmbeddingsForScriptChunksAsync(scriptChunk.ToList());
+        var chunkList = scriptChunk.ToList();
+        var texts = chunkList.Select(c => c.Text).ToList();
+        var embeddings = await embeddingService.GenerateEmbeddingsAsync(texts);
+
+        for (int i = 0; i < chunkList.Count; i++)
+        {
+            chunkList[i].Embedding = embeddings[i];
+        }
+
+        dbContext.ScriptChunks.UpdateRange(chunkList);
+        await dbContext.SaveChangesAsync();
         iterator++;
 
         Console.WriteLine($"[MAIN] Processed {iterator * 10}/{scriptChunks.Count} script chunks...");
-
     }
 
     Console.WriteLine("[MAIN] Embedding generation process completed.");
