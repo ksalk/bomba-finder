@@ -1,6 +1,7 @@
 using Bomba.DB;
 using Bomba.TranscriptFetcher;
 using Microsoft.EntityFrameworkCore;
+using Pgvector;
 using Pgvector.EntityFrameworkCore;
 
 public static class ScriptFinder
@@ -9,8 +10,15 @@ public static class ScriptFinder
     {
         Console.WriteLine($"[FINDER] Finding best matching chunks for query: \"{query}\"");
         OpenRouterEmbeddingService.Initialize();
+
+        var queryEmbeddingTask =  OpenRouterEmbeddingService.GenerateEmbeddingsAsync(new List<string> { query });
+
         var resultTrigrams = await FindClosestScriptChunksTrigrams(bombaDb, query);
-        var resutlVectors = await FindClosestScriptChunksVectors(bombaDb, query);
+
+        var queryEmbedding = await queryEmbeddingTask;
+        var queryVector = queryEmbedding.First();
+        
+        var resultVectors = await FindClosestScriptChunksVectors(bombaDb, query);
 
         Console.WriteLine();
         Console.WriteLine("[FINDER] Closest chunks using trigram similarity:");
@@ -21,7 +29,7 @@ public static class ScriptFinder
 
         Console.WriteLine();
         Console.WriteLine("[FINDER] Closest chunks using vector similarity:");
-        foreach (var result in resutlVectors)
+        foreach (var result in resultVectors)
         {
             Console.WriteLine($"Video: {result.VideoTitle}, Similarity: {result.SimilarityScore:0.000}, Text: {result.ChunkText}");
         }
@@ -29,11 +37,11 @@ public static class ScriptFinder
         // if result trigrams and result vectors contains same chunks, list them as well in descending order 
         var commonChunks = resultTrigrams
             .Select(c => c.ChunkId)
-            .Intersect(resutlVectors.Select(c => c.ChunkId))
+            .Intersect(resultVectors.Select(c => c.ChunkId))
             .OrderByDescending(c =>
             {
                 var trigramScore = resultTrigrams.First(r => r.ChunkId == c).SimilarityScore;
-                var vectorScore = resutlVectors.First(r => r.ChunkId == c).SimilarityScore;
+                var vectorScore = resultVectors.First(r => r.ChunkId == c).SimilarityScore;
                 return (trigramScore + vectorScore) / 2; // Average score for sorting
             })
             .ToList();
@@ -45,7 +53,7 @@ public static class ScriptFinder
             foreach (var chunkId in commonChunks)
             {
                 var chunk = resultTrigrams.First(c => c.ChunkId == chunkId);
-                var vectorChunk = resutlVectors.First(c => c.ChunkId == chunkId);
+                var vectorChunk = resultVectors.First(c => c.ChunkId == chunkId);
                 var averageScore = (chunk.SimilarityScore + vectorChunk.SimilarityScore) / 2;
                 Console.WriteLine($"Video: {chunk.VideoTitle}, Average Similarity: {averageScore:0.000}, Text: {chunk.ChunkText}");
             }
@@ -65,6 +73,11 @@ public static class ScriptFinder
         var queryEmbedding = await OpenRouterEmbeddingService.GenerateEmbeddingsAsync(new List<string> { query });
         var queryVector = queryEmbedding.First();
 
+        return await FindClosestScriptChunksVectors(bombaDb, queryVector);
+    }
+
+    private static async Task<List<SearchResult>> FindClosestScriptChunksVectors(BombaDbContext bombaDb, Vector queryVector)
+    {
         // Find 5 closest script chunks using cosine distance
         var closestChunks = await bombaDb.ScriptChunks
             .Where(sc => sc.Embedding != null)
