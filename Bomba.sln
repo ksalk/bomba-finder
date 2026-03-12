@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bomba.TranscriptFetcher", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bomba.DB", "src\Bomba.DB\Bomba.DB.csproj", "{5EFB52B8-D125-4CE4-81CF-5635544135E4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bomba.DiscordBot", "src\Bomba.DiscordBot\Bomba.DiscordBot.csproj", "{BCBE6893-BC08-4088-8F9D-4E754D55A2B0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +45,18 @@ Global
 		{5EFB52B8-D125-4CE4-81CF-5635544135E4}.Release|x64.Build.0 = Release|Any CPU
 		{5EFB52B8-D125-4CE4-81CF-5635544135E4}.Release|x86.ActiveCfg = Release|Any CPU
 		{5EFB52B8-D125-4CE4-81CF-5635544135E4}.Release|x86.Build.0 = Release|Any CPU
+		{BCBE6893-BC08-4088-8F9D-4E754D55A2B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCBE6893-BC08-4088-8F9D-4E754D55A2B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCBE6893-BC08-4088-8F9D-4E754D55A2B0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BCBE6893-BC08-4088-8F9D-4E754D55A2B0}.Debug|x64.Build.0 = Debug|Any CPU
+		{BCBE6893-BC08-4088-8F9D-4E754D55A2B0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BCBE6893-BC08-4088-8F9D-4E754D55A2B0}.Debug|x86.Build.0 = Debug|Any CPU
+		{BCBE6893-BC08-4088-8F9D-4E754D55A2B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCBE6893-BC08-4088-8F9D-4E754D55A2B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCBE6893-BC08-4088-8F9D-4E754D55A2B0}.Release|x64.ActiveCfg = Release|Any CPU
+		{BCBE6893-BC08-4088-8F9D-4E754D55A2B0}.Release|x64.Build.0 = Release|Any CPU
+		{BCBE6893-BC08-4088-8F9D-4E754D55A2B0}.Release|x86.ActiveCfg = Release|Any CPU
+		{BCBE6893-BC08-4088-8F9D-4E754D55A2B0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -50,5 +64,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{4A2F6C34-4EF2-4102-9F2B-D43D4B0AD016} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{5EFB52B8-D125-4CE4-81CF-5635544135E4} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{BCBE6893-BC08-4088-8F9D-4E754D55A2B0} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

@@ -7,11 +7,15 @@ public static class ScriptChunker
 
     public static async Task GetScriptChunks(BombaDbContext bombaDb)
     {
-        var allVideosInDb = bombaDb.VideoScripts.Include(vs => vs.Chunks).ToList();
+        var allVideosInDb = bombaDb.VideoScripts
+            .Include(vs => vs.Chunks)
+            .Where(vs => vs.Chunks == null || !vs.Chunks.Any())
+            .ToList();
+
         foreach (var videoScript in allVideosInDb)
         {
-            var chunks = ScriptChunker.GetScriptChunks(videoScript);
-            Console.WriteLine($"[MAIN] Script chunking done for video: {videoScript.VideoId}");
+            var chunks = GetScriptChunks(videoScript);
+            Console.WriteLine($"[CHUNKER] Script chunking done for video: {videoScript.VideoId}");
 
             videoScript.Chunks.Clear();
             videoScript.Chunks.AddRange(chunks);
