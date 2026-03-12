@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Bomba.DB;
 using Bomba.Embeddings;
+using Bomba.TranscriptFetcher;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -24,6 +25,7 @@ await bombaDb.Database.EnsureCreatedAsync();
 var scriptExtractor = new ScriptExtractor(bombaDb);
 var scriptChunker = new ScriptChunker(bombaDb);
 var embeddingService = new OpenRouterEmbeddingService(openRouterApiKey);
+var scriptEmbeddingService = new ScriptEmbeddingService(bombaDb, embeddingService);
 var scriptFinder = new ScriptFinder(bombaDb, embeddingService);
 
 if (EXTRACT_SCRIPTS)
@@ -49,35 +51,7 @@ if (CHUNK_SCRIPTS)
 
 if (GENERATE_EMBEDDINGS)
 {
-    await GenerateAndStoreEmbeddingsAsync(bombaDb);
-}
-
-async Task GenerateAndStoreEmbeddingsAsync(BombaDbContext dbContext)
-{
-    Console.WriteLine("[MAIN] Starting embedding generation process...");
-
-    var scriptChunks = await dbContext.ScriptChunks.Where(sc => sc.Embedding == null).ToListAsync();
-
-    var iterator = 0;
-    foreach (var scriptChunk in scriptChunks.Chunk(10))
-    {
-        var chunkList = scriptChunk.ToList();
-        var texts = chunkList.Select(c => c.Text).ToList();
-        var embeddings = await embeddingService.GenerateEmbeddingsAsync(texts);
-
-        for (int i = 0; i < chunkList.Count; i++)
-        {
-            chunkList[i].Embedding = embeddings[i];
-        }
-
-        dbContext.ScriptChunks.UpdateRange(chunkList);
-        await dbContext.SaveChangesAsync();
-        iterator++;
-
-        Console.WriteLine($"[MAIN] Processed {iterator * 10}/{scriptChunks.Count} script chunks...");
-    }
-
-    Console.WriteLine("[MAIN] Embedding generation process completed.");
+    await scriptEmbeddingService.GenerateAndStoreEmbeddingsAsync();
 }
 
 async Task ExportBombaDbToJson(string filePath)
