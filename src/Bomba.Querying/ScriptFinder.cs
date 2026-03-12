@@ -1,17 +1,16 @@
 using Bomba.DB;
-using Bomba.TranscriptFetcher;
 using Microsoft.EntityFrameworkCore;
 using Pgvector;
 using Pgvector.EntityFrameworkCore;
+using Bomba.Embeddings;
 
-public static class ScriptFinder
+public class ScriptFinder(BombaDbContext bombaDb, OpenRouterEmbeddingService embeddingService)
 {
-    public static async Task<SearchResult> GetBestResultForQuery(BombaDbContext bombaDb, string query)
+    public async Task<SearchResult> GetBestResultForQuery(string query)
     {
         Console.WriteLine($"[FINDER] Finding best matching chunks for query: \"{query}\"");
-        OpenRouterEmbeddingService.Initialize();
 
-        var queryEmbeddingTask =  OpenRouterEmbeddingService.GenerateEmbeddingsAsync(new List<string> { query });
+        var queryEmbeddingTask =  embeddingService.GenerateEmbeddingsAsync(new List<string> { query });
 
         var resultTrigrams = await FindClosestScriptChunksTrigrams(bombaDb, query);
 
@@ -67,16 +66,16 @@ public static class ScriptFinder
         return finalResult;
     }
 
-    private static async Task<List<SearchResult>> FindClosestScriptChunksVectors(BombaDbContext bombaDb, string query)
+    private async Task<List<SearchResult>> FindClosestScriptChunksVectors(BombaDbContext bombaDb, string query)
     {
         // Generate embedding for the query
-        var queryEmbedding = await OpenRouterEmbeddingService.GenerateEmbeddingsAsync(new List<string> { query });
+        var queryEmbedding = await embeddingService.GenerateEmbeddingsAsync(new List<string> { query });
         var queryVector = queryEmbedding.First();
 
         return await FindClosestScriptChunksVectors(bombaDb, queryVector);
     }
 
-    private static async Task<List<SearchResult>> FindClosestScriptChunksVectors(BombaDbContext bombaDb, Vector queryVector)
+    private async Task<List<SearchResult>> FindClosestScriptChunksVectors(BombaDbContext bombaDb, Vector queryVector)
     {
         // Find 5 closest script chunks using cosine distance
         var closestChunks = await bombaDb.ScriptChunks
@@ -99,7 +98,7 @@ public static class ScriptFinder
         return closestChunks;
     }
 
-    private static async Task<List<SearchResult>> FindClosestScriptChunksTrigrams(BombaDbContext bombaDb, string query)
+    private async Task<List<SearchResult>> FindClosestScriptChunksTrigrams(BombaDbContext bombaDb, string query)
     {
         var normalizedQuery = TextNormalizer.Normalize(query);
 

@@ -1,11 +1,14 @@
 using System.Text.RegularExpressions;
 using Bomba.DB;
+using Bomba.Embeddings;
 using Discord;
 using Discord.WebSocket;
 
 class Program
 {
     private static DiscordSocketClient? _client;
+    private static OpenRouterEmbeddingService? _embeddingService;
+    private static ScriptFinder? _scriptFinder;
 
     static async Task Main(string[] args)
     {
@@ -14,6 +17,10 @@ class Program
         {
             throw new InvalidOperationException("DISCORD_TOKEN environment variable is not set");
         }
+
+        await using var db = new BombaDbContext();
+        _embeddingService = new OpenRouterEmbeddingService();
+        _scriptFinder = new ScriptFinder(db, _embeddingService);
 
         var config = new DiscordSocketConfig
         {
@@ -56,8 +63,7 @@ class Program
             var text = (string)command.Data.Options.First().Value;
             Console.WriteLine($"Otrzymano komendę bomba z tekstem: {text}");
 
-            await using var db = new BombaDbContext();
-            var result = await ScriptFinder.GetBestResultForQuery(db, text.ToLower());
+            var result = await _scriptFinder.GetBestResultForQuery(text.ToLower());
 
             Console.WriteLine($"Najlepszy wynik to {result.VideoTitle} z dopasowaniem {result.SimilarityScore:F3}");
 

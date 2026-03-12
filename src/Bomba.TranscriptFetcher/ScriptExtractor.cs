@@ -1,8 +1,8 @@
 using Bomba.DB;
 
-public class ScriptExtractor
+public class ScriptExtractor(BombaDbContext bombaDb)
 {
-    public static async Task ExtractScriptsForPlaylist(BombaDbContext bombaDb, string youtubePlaylistUrl, bool extractOnlyMissing, bool showSkipInfo)
+    public async Task ExtractScriptsForPlaylist(string youtubePlaylistUrl, bool extractOnlyMissing, bool showSkipInfo)
     {
         var videosMetadata = await YoutubeMetadataDownloader.GetPlaylistVideosAsync(youtubePlaylistUrl);
 
@@ -64,7 +64,7 @@ public class ScriptExtractor
         }
     }
 
-    private static async Task<ExtractedScript?> TryGettingVideoScript(YoutubeVideoMetadata videoMetadata)
+    private async Task<ExtractedScript?> TryGettingVideoScript(YoutubeVideoMetadata videoMetadata)
     {
         // Try downloading subtitles first, if available
         var downloadedSubtitlePath = await YoutubeDownloader.DownloadSubtitles(videoMetadata.Url);

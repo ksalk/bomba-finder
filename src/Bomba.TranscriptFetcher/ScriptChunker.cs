@@ -1,11 +1,11 @@
 using Bomba.DB;
 using Microsoft.EntityFrameworkCore;
 
-public static class ScriptChunker
+public class ScriptChunker(BombaDbContext bombaDb)
 {
-    private static readonly int[] ChunkSizeThresholds = { 30, 50 };
+    private readonly int[] ChunkSizeThresholds = { 30, 50 };
 
-    public static async Task GetScriptChunks(BombaDbContext bombaDb)
+    public async Task GetScriptChunks()
     {
         var allVideosInDb = bombaDb.VideoScripts
             .Include(vs => vs.Chunks)
@@ -23,7 +23,7 @@ public static class ScriptChunker
         }
     }
 
-    private static List<ScriptChunk> GetScriptChunks(VideoScript videoScript)
+    private List<ScriptChunk> GetScriptChunks(VideoScript videoScript)
     {
         var chunks = new List<ScriptChunk>();
 

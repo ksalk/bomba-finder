@@ -4,18 +4,18 @@ using System.Net.Http.Json;
 using Pgvector;
 using Bomba.DB;
 
-namespace Bomba.TranscriptFetcher;
+namespace Bomba.Embeddings;
 
-public static class OpenRouterEmbeddingService
+public class OpenRouterEmbeddingService
 {
     private const string OpenRouterApiUrl = "https://openrouter.ai/api/v1/embeddings";
     private const string EmbeddingModel = "openai/text-embedding-3-large";
     private const int BatchSize = 10;
-    private static readonly HttpClient HttpClient = new();
+    private readonly HttpClient HttpClient = new();
 
-    public static void Initialize()
+    public OpenRouterEmbeddingService(string openRouterApiKey = null)
     {
-        var apiKey = "";
+        var apiKey = openRouterApiKey ?? Environment.GetEnvironmentVariable("OPENROUTER_API_KEY");
         if (string.IsNullOrEmpty(apiKey))
         {
             throw new InvalidOperationException(
@@ -25,11 +25,10 @@ public static class OpenRouterEmbeddingService
 
         HttpClient.DefaultRequestHeaders.Clear();
         HttpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-        //HttpClient.DefaultRequestHeaders.Add("HTTP-Referer", "https://github.com/bomba-finder");
         HttpClient.DefaultRequestHeaders.Add("X-Title", "Bomba Transcript Fetcher");
     }
 
-    public static async Task GenerateEmbeddingsForVideoScriptAsync(VideoScript videoScript)
+    public async Task GenerateEmbeddingsForVideoScriptAsync(VideoScript videoScript)
     {
         if (videoScript.Chunks == null || videoScript.Chunks.Count == 0)
         {
@@ -52,7 +51,7 @@ public static class OpenRouterEmbeddingService
         Console.WriteLine($"[EMBEDDING] Saved {embeddings.Count} embeddings for VideoScript {videoScript.Id}");
     }
 
-    public static async Task GenerateEmbeddingsForScriptChunksAsync(List<ScriptChunk> scriptChunks)
+    public async Task GenerateEmbeddingsForScriptChunksAsync(List<ScriptChunk> scriptChunks)
     {
         var texts = scriptChunks.Select(c => c.Text).ToList();
         var embeddings = await GenerateEmbeddingsAsync(texts);
@@ -67,7 +66,7 @@ public static class OpenRouterEmbeddingService
         await context.SaveChangesAsync();
     }
 
-    public static async Task<List<Vector>> GenerateEmbeddingsAsync(List<string> texts)
+    public async Task<List<Vector>> GenerateEmbeddingsAsync(List<string> texts)
     {
         var allEmbeddings = new List<Vector>();
         var totalBatches = (int)Math.Ceiling(texts.Count / (double)BatchSize);
@@ -92,7 +91,7 @@ public static class OpenRouterEmbeddingService
         return allEmbeddings;
     }
 
-    private static async Task<List<Vector>> GenerateBatchEmbeddingsWithRetryAsync(List<string> batch, int maxRetries = 3)
+    private async Task<List<Vector>> GenerateBatchEmbeddingsWithRetryAsync(List<string> batch, int maxRetries = 3)
     {
         for (var attempt = 1; attempt <= maxRetries; attempt++)
         {
@@ -117,7 +116,7 @@ public static class OpenRouterEmbeddingService
         throw new InvalidOperationException("Unexpected error in retry loop");
     }
 
-    private static async Task<List<Vector>> GenerateBatchEmbeddingsAsync(List<string> batch)
+    private async Task<List<Vector>> GenerateBatchEmbeddingsAsync(List<string> batch)
     {
         var requestBody = new
         {
