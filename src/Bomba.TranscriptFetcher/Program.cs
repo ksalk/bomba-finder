@@ -20,23 +20,24 @@ await bombaDb.Database.EnsureCreatedAsync();
 if (EXTRACT_SCRIPTS)
 {
     Console.WriteLine("[MAIN] Starting script extraction process...");
-    var videoPlaylist = "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR";
-    await ScriptExtractor.ExtractScriptsForPlaylist(bombaDb, videoPlaylist, EXTRACT_ONLY_MISSING, SHOW_SKIP_INFO);
+    var videoPlaylists = new[]
+    {
+        "https://www.youtube.com/playlist?list=PLHtUOYOPwzJGGZkjR-FspIL17YtSBGaCR", // Kapitan Bomba
+        "", // Laserowy Gniew Dzidy
+        "" // Galaktyczne Lektury
+    };
+
+    foreach (var videoPlaylist in videoPlaylists)
+    {
+        await ScriptExtractor.ExtractScriptsForPlaylist(bombaDb, videoPlaylist, EXTRACT_ONLY_MISSING, SHOW_SKIP_INFO);
+    }
+    
 }
 
 // 3. Create transcript chunks and store it into DB for better context handling and retrieval
 if (CHUNK_SCRIPTS)
 {
-    var allVideosInDb = bombaDb.VideoScripts.Include(vs => vs.Chunks).ToList();
-    foreach (var videoScript in allVideosInDb)
-    {
-        var chunks = ScriptChunker.GetScriptChunks(videoScript);
-        Console.WriteLine($"[MAIN] Script chunking done for video: {videoScript.VideoId}");
-
-        videoScript.Chunks.Clear();
-        videoScript.Chunks.AddRange(chunks);
-        await bombaDb.SaveChangesAsync();
-    }
+    await ScriptChunker.GetScriptChunks(bombaDb);
 }
 
 

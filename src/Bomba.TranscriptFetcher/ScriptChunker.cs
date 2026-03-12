@@ -1,10 +1,25 @@
 using Bomba.DB;
+using Microsoft.EntityFrameworkCore;
 
 public static class ScriptChunker
 {
     private static readonly int[] ChunkSizeThresholds = { 30, 50 };
 
-    public static List<ScriptChunk> GetScriptChunks(VideoScript videoScript)
+    public static async Task GetScriptChunks(BombaDbContext bombaDb)
+    {
+        var allVideosInDb = bombaDb.VideoScripts.Include(vs => vs.Chunks).ToList();
+        foreach (var videoScript in allVideosInDb)
+        {
+            var chunks = ScriptChunker.GetScriptChunks(videoScript);
+            Console.WriteLine($"[MAIN] Script chunking done for video: {videoScript.VideoId}");
+
+            videoScript.Chunks.Clear();
+            videoScript.Chunks.AddRange(chunks);
+            await bombaDb.SaveChangesAsync();
+        }
+    }
+
+    private static List<ScriptChunk> GetScriptChunks(VideoScript videoScript)
     {
         var chunks = new List<ScriptChunk>();
 
@@ -22,7 +37,7 @@ public static class ScriptChunker
 
                 var chunkText = string.Join(" ", chunkSegments.Select(s => s.Text)).Trim();
 
-                if(chunks.Any(c => c.Text == chunkText && c.Start == chunkSegments.First().Start && c.End == chunkSegments.Last().End))
+                if (chunks.Any(c => c.Text == chunkText && c.Start == chunkSegments.First().Start && c.End == chunkSegments.Last().End))
                     continue;
 
                 chunks.Add(new ScriptChunk
