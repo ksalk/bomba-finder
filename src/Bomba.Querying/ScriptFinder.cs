@@ -5,7 +5,7 @@ using Pgvector.EntityFrameworkCore;
 
 public static class ScriptFinder
 {
-    public static async Task GetBestResultForQuery(BombaDbContext bombaDb, string query)
+    public static async Task<SearchResult> GetBestResultForQuery(BombaDbContext bombaDb, string query)
     {
         Console.WriteLine($"[FINDER] Finding best matching chunks for query: \"{query}\"");
         OpenRouterEmbeddingService.Initialize();
@@ -55,6 +55,8 @@ public static class ScriptFinder
         Console.WriteLine();
         Console.WriteLine("[FINDER] Final best matching chunk:");
         Console.WriteLine($"Video: {finalResult.VideoTitle}, Similarity: {finalResult.SimilarityScore:0.000}, Text: {finalResult.ChunkText}");
+
+        return finalResult;
     }
 
     private static async Task<List<SearchResult>> FindClosestScriptChunksVectors(BombaDbContext bombaDb, string query)

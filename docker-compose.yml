@@ -28,17 +28,17 @@ services:
       postgres:
         condition: service_healthy
 
-  # bot:
-  #   build:
-  #     context: ./src/bomba-bot
-  #     dockerfile: Dockerfile
-  #   restart: unless-stopped
-  #   environment:
-  #     DISCORD_TOKEN: ${DISCORD_TOKEN}
-  #     CONNECTION_STRING: Host=postgres;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
+  bot:
+    build:
+      context: .
+      dockerfile: src/Bomba.DiscordBot/Dockerfile
+    restart: unless-stopped
+    environment:
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      CONNECTION_STRING: Host=postgres;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   bomba_pgdata:
