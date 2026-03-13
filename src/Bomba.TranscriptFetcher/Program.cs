@@ -2,7 +2,6 @@ using System.Text.Json;
 using Bomba.DB;
 using Bomba.Embeddings;
 using Bomba.TranscriptFetcher;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 var configuration = new ConfigurationBuilder()
@@ -26,7 +25,7 @@ var scriptExtractor = new ScriptExtractor(bombaDb);
 var scriptChunker = new ScriptChunker(bombaDb);
 var embeddingService = new OpenRouterEmbeddingService(openRouterApiKey);
 var scriptEmbeddingService = new ScriptEmbeddingService(bombaDb, embeddingService);
-var scriptFinder = new ScriptFinder(bombaDb, embeddingService);
+//var scriptFinder = new ScriptFinder(bombaDb, embeddingService);
 
 if (EXTRACT_SCRIPTS)
 {

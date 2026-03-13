@@ -63,6 +63,9 @@ class Program
             var text = (string)command.Data.Options.First().Value;
             Console.WriteLine($"Otrzymano komendę bomba z tekstem: {text}");
 
+            // Defer response immediately to prevent Discord timeout
+            await command.DeferAsync();
+
             var result = await _scriptFinder.GetBestResultForQuery(text.ToLower());
 
             Console.WriteLine($"Najlepszy wynik to {result.VideoTitle} z dopasowaniem {result.SimilarityScore:F3}");
@@ -79,7 +82,7 @@ class Program
             var timestampSeconds = (int)result.ChunkStartTime.TotalSeconds;
             embed.AddField(result.VideoTitle, $"[{result.VideoTitle}]({result.VideoUrl}&t={timestampSeconds})", inline: true);
 
-            await command.RespondAsync(embed: embed.Build());
+            await command.FollowupAsync(embed: embed.Build());
         }
     }
 

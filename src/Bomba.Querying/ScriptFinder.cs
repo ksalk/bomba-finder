@@ -10,14 +10,14 @@ public class ScriptFinder(BombaDbContext bombaDb, OpenRouterEmbeddingService emb
     {
         Console.WriteLine($"[FINDER] Finding best matching chunks for query: \"{query}\"");
 
-        var queryEmbeddingTask =  embeddingService.GenerateEmbeddingsAsync(new List<string> { query });
+        var queryEmbeddingTask = embeddingService.GenerateEmbeddingsAsync(new List<string> { query });
 
         var resultTrigrams = await FindClosestScriptChunksTrigrams(bombaDb, query);
 
         var queryEmbedding = await queryEmbeddingTask;
         var queryVector = queryEmbedding.First();
-        
-        var resultVectors = await FindClosestScriptChunksVectors(bombaDb, query);
+
+        var resultVectors = await FindClosestScriptChunksVectors(bombaDb, queryVector);
 
         Console.WriteLine();
         Console.WriteLine("[FINDER] Closest chunks using trigram similarity:");
