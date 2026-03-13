@@ -19,6 +19,11 @@ class Program
 
         _embeddingService = new OpenRouterEmbeddingService();
 
+        using (var db = new BombaDbContext())
+        {
+            await db.Database.EnsureCreatedAsync();
+        }
+
         var config = new DiscordSocketConfig
         {
             GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMessages
