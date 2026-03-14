@@ -19,12 +19,12 @@ COPY src/ ./src/
 RUN dotnet publish src/Bomba.Api/Bomba.Api.csproj -c Release -o /app/publish --no-restore
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
 
 # Run as non-root user for security
-RUN useradd -m -s /bin/bash appuser
+RUN adduser -D appuser
 USER appuser
 
 EXPOSE 8080
