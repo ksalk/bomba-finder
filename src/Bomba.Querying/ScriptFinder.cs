@@ -19,19 +19,19 @@ public class ScriptFinder(BombaDbContext bombaDb, OpenRouterEmbeddingService emb
 
         var resultVectors = await FindClosestScriptChunksVectors(bombaDb, queryVector);
 
-        Console.WriteLine();
-        Console.WriteLine("[FINDER] Closest chunks using trigram similarity:");
-        foreach (var result in resultTrigrams)
-        {
-            Console.WriteLine($"Video: {result.VideoTitle}, Similarity: {result.SimilarityScore:0.000}, Text: {result.ChunkText}");
-        }
+        // Console.WriteLine();
+        // Console.WriteLine("[FINDER] Closest chunks using trigram similarity:");
+        // foreach (var result in resultTrigrams)
+        // {
+        //     Console.WriteLine($"Video: {result.VideoTitle}, Similarity: {result.SimilarityScore:0.000}, Text: {result.ChunkText}");
+        // }
 
-        Console.WriteLine();
-        Console.WriteLine("[FINDER] Closest chunks using vector similarity:");
-        foreach (var result in resultVectors)
-        {
-            Console.WriteLine($"Video: {result.VideoTitle}, Similarity: {result.SimilarityScore:0.000}, Text: {result.ChunkText}");
-        }
+        // Console.WriteLine();
+        // Console.WriteLine("[FINDER] Closest chunks using vector similarity:");
+        // foreach (var result in resultVectors)
+        // {
+        //     Console.WriteLine($"Video: {result.VideoTitle}, Similarity: {result.SimilarityScore:0.000}, Text: {result.ChunkText}");
+        // }
 
         // if result trigrams and result vectors contains same chunks, list them as well in descending order 
         var commonChunks = resultTrigrams
@@ -45,21 +45,21 @@ public class ScriptFinder(BombaDbContext bombaDb, OpenRouterEmbeddingService emb
             })
             .ToList();
 
-        if (commonChunks.Count > 0)
-        {
-            Console.WriteLine();
-            Console.WriteLine("[FINDER] Chunks found in both trigram and vector search:");
-            foreach (var chunkId in commonChunks)
-            {
-                var chunk = resultTrigrams.First(c => c.ChunkId == chunkId);
-                var vectorChunk = resultVectors.First(c => c.ChunkId == chunkId);
-                var averageScore = (chunk.SimilarityScore + vectorChunk.SimilarityScore) / 2;
-                Console.WriteLine($"Video: {chunk.VideoTitle}, Average Similarity: {averageScore:0.000}, Text: {chunk.ChunkText}");
-            }
-        }
+        // if (commonChunks.Count > 0)
+        // {
+        //     Console.WriteLine();
+        //     Console.WriteLine("[FINDER] Chunks found in both trigram and vector search:");
+        //     foreach (var chunkId in commonChunks)
+        //     {
+        //         var chunk = resultTrigrams.First(c => c.ChunkId == chunkId);
+        //         var vectorChunk = resultVectors.First(c => c.ChunkId == chunkId);
+        //         var averageScore = (chunk.SimilarityScore + vectorChunk.SimilarityScore) / 2;
+        //         Console.WriteLine($"Video: {chunk.VideoTitle}, Average Similarity: {averageScore:0.000}, Text: {chunk.ChunkText}");
+        //     }
+        // }
 
         SearchResult finalResult = commonChunks.Any() ? resultTrigrams.First(r => commonChunks.Contains(r.ChunkId)) : resultTrigrams.First();
-        Console.WriteLine();
+        // Console.WriteLine();
         Console.WriteLine("[FINDER] Final best matching chunk:");
         Console.WriteLine($"Video: {finalResult.VideoTitle}, Similarity: {finalResult.SimilarityScore:0.000}, Text: {finalResult.ChunkText}");
 
