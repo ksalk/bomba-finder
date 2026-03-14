@@ -10,7 +10,7 @@ public class BombaDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+        var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? "Host=localhost:5450;Database=bomba_db;Username=postgres;Password=yourpassword";
 
         optionsBuilder.UseNpgsql(connectionString, options => options.UseVector());
     }

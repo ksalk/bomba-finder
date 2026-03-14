@@ -40,5 +40,21 @@ services:
       postgres:
         condition: service_healthy
 
+  api:
+    build:
+      context: .
+      dockerfile: src/Bomba.Api/Dockerfile
+    restart: unless-stopped
+    environment:
+      CONNECTION_STRING: Host=postgres;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      ENABLE_WEB_UI: ${ENABLE_WEB_UI:-true}
+      ASPNETCORE_URLS: http://+:8080
+    ports:
+      - "5000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   bomba_pgdata:
