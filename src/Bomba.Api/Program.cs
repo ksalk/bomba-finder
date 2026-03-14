@@ -1,6 +1,8 @@
 using System.Text.RegularExpressions;
+using System.Threading.RateLimiting;
 using Bomba.DB;
 using Bomba.Embeddings;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,9 +20,22 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("search", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 10;
+        limiterOptions.Window = TimeSpan.FromSeconds(10);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 2;
+    });
+});
+
 var app = builder.Build();
 
 app.UseCors("AllowAll");
+app.UseRateLimiter();
 
 var enableWebUi = Environment.GetEnvironmentVariable("ENABLE_WEB_UI")?.ToLower() != "false";
 
@@ -61,7 +76,7 @@ app.MapGet("/api/search", async (string query, ScriptFinder scriptFinder) =>
     {
         return Results.Problem($"Search failed: {ex.Message}");
     }
-});
+}).RequireRateLimiting("search");
 
 if (enableWebUi)
 {
