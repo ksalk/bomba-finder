@@ -6,6 +6,11 @@ using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.WriteIndented = true;
+});
+
 builder.Services.AddSingleton(_ => new OpenRouterEmbeddingService(Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")!));
 builder.Services.AddScoped<BombaDbContext>();
 builder.Services.AddScoped<ScriptFinder>();
