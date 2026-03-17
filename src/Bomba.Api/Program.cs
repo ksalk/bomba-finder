@@ -13,6 +13,12 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 builder.Services.AddSingleton(_ => new OpenRouterEmbeddingService(Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")!));
 builder.Services.AddScoped<BombaDbContext>();
+builder.Services.AddDistributedPostgreSqlCache(options =>
+{
+    options.ConnectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING");
+    options.SchemaName = "public";
+    options.TableName = "SearchCache";
+});
 builder.Services.AddScoped<ScriptFinder>();
 
 builder.Services.AddCors(options =>

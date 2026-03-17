@@ -3,11 +3,13 @@ using Bomba.DB;
 using Bomba.Embeddings;
 using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
 
 class Program
 {
     private static DiscordSocketClient? _client;
-    private static OpenRouterEmbeddingService? _embeddingService;
+    private static IServiceProvider? _serviceProvider;
 
     static async Task Main(string[] args)
     {
@@ -17,10 +19,22 @@ class Program
             throw new InvalidOperationException("DISCORD_TOKEN environment variable is not set");
         }
 
-        _embeddingService = new OpenRouterEmbeddingService();
-
-        using (var db = new BombaDbContext())
+        var services = new ServiceCollection();
+        services.AddSingleton<OpenRouterEmbeddingService>();
+        services.AddScoped<BombaDbContext>();
+        services.AddDistributedPostgreSqlCache(options =>
         {
+            options.ConnectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING");
+            options.SchemaName = "public";
+            options.TableName = "SearchCache";
+        });
+        services.AddScoped<ScriptFinder>();
+        
+        _serviceProvider = services.BuildServiceProvider();
+
+        using (var scope = _serviceProvider.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BombaDbContext>();
             await db.Database.EnsureCreatedAsync();
         }
 
@@ -81,8 +95,8 @@ class Program
             // Defer response immediately to prevent Discord timeout
             await command.DeferAsync();
 
-            await using var db = new BombaDbContext();
-            var scriptFinder = new ScriptFinder(db, _embeddingService);
+            using var scope = _serviceProvider!.CreateScope();
+            var scriptFinder = scope.ServiceProvider.GetRequiredService<ScriptFinder>();
 
             var result = await scriptFinder.GetBestResultForQuery(text.ToLower());
 
