@@ -63,6 +63,19 @@ class Program
         if (command.CommandName == "bomba")
         {
             var text = (string)command.Data.Options.First().Value;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                await command.RespondAsync("Tekst nie może być pusty", ephemeral: true);
+                return;
+            }
+
+            const int maxQueryLength = 64;
+            if (text.Length > maxQueryLength)
+            {
+                await command.RespondAsync($"Tekst nie może przekraczać {maxQueryLength} znaków", ephemeral: true);
+                return;
+            }
+
             Console.WriteLine($"Otrzymano komendę bomba z tekstem: {text}");
 
             // Defer response immediately to prevent Discord timeout

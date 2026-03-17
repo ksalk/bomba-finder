@@ -57,6 +57,12 @@ app.MapGet("/api/search", async (string query, ScriptFinder scriptFinder) =>
         return Results.BadRequest(new { error = "Query parameter is required" });
     }
 
+    const int maxQueryLength = 64;
+    if (query.Length > maxQueryLength)
+    {
+        return Results.BadRequest(new { error = $"Query parameter cannot exceed {maxQueryLength} characters" });
+    }
+
     try
     {
         var result = await scriptFinder.GetBestResultForQuery(query.ToLower());
