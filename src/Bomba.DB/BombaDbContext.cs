@@ -7,6 +7,7 @@ public class BombaDbContext : DbContext
 {
     public DbSet<VideoScript> VideoScripts { get; set; }
     public DbSet<ScriptChunk> ScriptChunks { get; set; }
+    public DbSet<QueryCacheEntry> QueryCacheEntries { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -46,5 +47,16 @@ public class BombaDbContext : DbContext
             .HasIndex(e => e.NormalizedText)
             .HasMethod("gin")
             .HasOperators("gin_trgm_ops");
+
+        modelBuilder.Entity<QueryCacheEntry>()
+            .HasKey(e => e.NormalizedQuery);
+
+        modelBuilder.Entity<QueryCacheEntry>()
+            .Property(e => e.NormalizedQuery)
+            .HasMaxLength(200);
+
+        modelBuilder.Entity<QueryCacheEntry>()
+            .HasIndex(e => e.AccessCount)
+            .IsDescending();
     }
 }

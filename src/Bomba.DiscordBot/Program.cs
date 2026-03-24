@@ -1,13 +1,16 @@
 using System.Text.RegularExpressions;
 using Bomba.DB;
 using Bomba.Embeddings;
+using Bomba.Querying;
 using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 
 class Program
 {
     private static DiscordSocketClient? _client;
-    private static OpenRouterEmbeddingService? _embeddingService;
+    private static IServiceProvider? _serviceProvider;
 
     static async Task Main(string[] args)
     {
@@ -17,7 +20,18 @@ class Program
             throw new InvalidOperationException("DISCORD_TOKEN environment variable is not set");
         }
 
-        _embeddingService = new OpenRouterEmbeddingService();
+        // Setup DI
+        var services = new ServiceCollection();
+        services.AddSingleton(_ => new OpenRouterEmbeddingService());
+        services.AddScoped<BombaDbContext>();
+        services.AddScoped<QueryCacheService>();
+        services.AddScoped<ScriptFinder>();
+        services.AddSingleton<IMemoryCache>(new MemoryCache(new MemoryCacheOptions
+        {
+            SizeLimit = 5000
+        }));
+
+        _serviceProvider = services.BuildServiceProvider();
 
         using (var db = new BombaDbContext())
         {
@@ -81,8 +95,9 @@ class Program
             // Defer response immediately to prevent Discord timeout
             await command.DeferAsync();
 
-            await using var db = new BombaDbContext();
-            var scriptFinder = new ScriptFinder(db, _embeddingService);
+            using var scope = _serviceProvider!.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<BombaDbContext>();
+            var scriptFinder = scope.ServiceProvider.GetRequiredService<ScriptFinder>();
 
             var result = await scriptFinder.GetBestResultForQuery(text.ToLower());
 
@@ -90,7 +105,6 @@ class Program
 
             var embed = new EmbedBuilder()
                 .WithTitle($"Szukam \"{text}\"")
-                //.WithDescription($"Wynik znaleziono z dopasowaniem {result.SimilarityScore * 100:F1}%")
                 .WithColor(Color.Blue);
 
             var videoId = ExtractVideoId(result.VideoUrl);

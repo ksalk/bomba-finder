@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using System.Threading.RateLimiting;
 using Bomba.DB;
 using Bomba.Embeddings;
+using Bomba.Querying;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,7 +14,12 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 builder.Services.AddSingleton(_ => new OpenRouterEmbeddingService(Environment.GetEnvironmentVariable("OPENROUTER_API_KEY")!));
 builder.Services.AddScoped<BombaDbContext>();
+builder.Services.AddScoped<QueryCacheService>();
 builder.Services.AddScoped<ScriptFinder>();
+builder.Services.AddMemoryCache(options =>
+{
+    options.SizeLimit = 5000;
+});
 
 builder.Services.AddCors(options =>
 {
