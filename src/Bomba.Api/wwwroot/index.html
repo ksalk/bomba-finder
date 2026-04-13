@@ -262,6 +262,7 @@
             const query = document.getElementById('queryInput').value.trim();
             if (!query) return;
 
+            history.pushState(null, '', '?query=' + encodeURIComponent(query));
             showLoading(true);
             hideError();
             hideResult();
@@ -320,7 +321,14 @@
         function newSearch() {
             hideResult();
             document.getElementById('queryInput').value = '';
-            document.getElementById('queryInput').focus();
+        document.getElementById('queryInput').focus();
+
+        const _initialQuery = new URLSearchParams(window.location.search).get('query');
+        if (_initialQuery) {
+            document.getElementById('queryInput').value = _initialQuery;
+            search();
+        }
+    
         }
 
         document.getElementById('queryInput').focus();
