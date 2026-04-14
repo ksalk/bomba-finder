@@ -321,17 +321,16 @@
         function newSearch() {
             hideResult();
             document.getElementById('queryInput').value = '';
-        document.getElementById('queryInput').focus();
+            document.getElementById('queryInput').focus();
+        }
 
         const _initialQuery = new URLSearchParams(window.location.search).get('query');
         if (_initialQuery) {
             document.getElementById('queryInput').value = _initialQuery;
             search();
+        } else {
+            document.getElementById('queryInput').focus();
         }
-    
-        }
-
-        document.getElementById('queryInput').focus();
     </script>
 </body>
 </html>
