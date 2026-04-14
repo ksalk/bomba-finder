@@ -1,12 +1,14 @@
 using Bomba.DB;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Bomba.Querying;
 
 public class QueryCacheService(
     IMemoryCache memoryCache,
-    BombaDbContext dbContext)
+    BombaDbContext dbContext,
+    IServiceScopeFactory scopeFactory)
 {
     private static readonly MemoryCacheEntryOptions L1CacheOptions = new()
     {
@@ -21,8 +23,13 @@ public class QueryCacheService(
         // Check L1 (Memory Cache)
         if (memoryCache.TryGetValue(normalizedQuery, out Guid cachedChunkId))
         {
-            // Fire-and-forget update of access stats in L2
-            _ = Task.Run(async () => await UpdateAccessStatsAsync(normalizedQuery));
+            // Fire-and-forget update of access stats in L2 using a dedicated scope to avoid concurrent DbContext access
+            _ = Task.Run(async () =>
+            {
+                using var scope = scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<BombaDbContext>();
+                await UpdateAccessStatsAsync(db, normalizedQuery);
+            });
             return cachedChunkId;
         }
 
@@ -36,8 +43,13 @@ public class QueryCacheService(
             // Populate L1
             memoryCache.Set(normalizedQuery, entry.ScriptChunkId, L1CacheOptions);
 
-            // Fire-and-forget update of access stats
-            _ = Task.Run(async () => await UpdateAccessStatsAsync(normalizedQuery));
+            // Fire-and-forget update of access stats using a dedicated scope to avoid concurrent DbContext access
+            _ = Task.Run(async () =>
+            {
+                using var scope = scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<BombaDbContext>();
+                await UpdateAccessStatsAsync(db, normalizedQuery);
+            });
 
             return entry.ScriptChunkId;
         }
@@ -127,11 +139,11 @@ public class QueryCacheService(
         };
     }
 
-    private async Task UpdateAccessStatsAsync(string normalizedQuery)
+    private async Task UpdateAccessStatsAsync(BombaDbContext db, string normalizedQuery)
     {
         try
         {
-            await dbContext.QueryCacheEntries
+            await db.QueryCacheEntries
                 .Where(e => e.NormalizedQuery == normalizedQuery)
                 .ExecuteUpdateAsync(setters => setters
                     .SetProperty(e => e.LastAccessedAt, DateTime.UtcNow)
