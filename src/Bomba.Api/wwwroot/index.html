@@ -245,6 +245,7 @@
             <div class="chunk-text" id="chunkText"></div>
             <div class="actions">
                 <button class="btn-secondary" onclick="openOnYouTube()">Open on YouTube</button>
+                <button class="btn-primary" id="shareBtn" onclick="shareSearch()">Share</button>
             </div>
         </div>
     </div>
@@ -316,6 +317,15 @@
             if (currentResult) {
                 window.open(currentResult.videoUrl, '_blank');
             }
+        }
+
+        async function shareSearch() {
+            const url = window.location.href;
+            await navigator.clipboard.writeText(url);
+            const btn = document.getElementById('shareBtn');
+            const original = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = original; }, 2000);
         }
 
         function newSearch() {
