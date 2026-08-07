@@ -83,8 +83,7 @@ app.MapGet("/api/search", async (string query, ScriptFinder scriptFinder) =>
             timestamp = timestampSeconds,
             //similarityScore = result.SimilarityScore,
             thumbnailUrl = $"https://img.youtube.com/vi/{videoId}/hqdefault.jpg",
-            videoId = videoId,
-            chunkText = result.ChunkText
+            videoId = videoId
         };
 
         return Results.Ok(response);
